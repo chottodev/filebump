@@ -1,0 +1,62 @@
+doctype html
+html(lang="ru")
+  head
+    title Filebump | Mobilon Connect
+    link(rel="stylesheet", href="/static/bootstrap/dist/css/bootstrap.min.css")
+    script(src="/static/jquery/dist/jquery.min.js")
+    script(src="/static/jgrowl/jquery.jgrowl.min.js")
+    link(rel="stylesheet", href="/static/jgrowl/jquery.jgrowl.min.css")
+    script(src="/static/bootstrap/dist/js/bootstrap.min.js")
+    link(
+      rel="stylesheet",
+      href="/static/datatables.net-bs/css/dataTables.bootstrap.css"
+    )
+    script(src="/static/datatables.net/js/jquery.dataTables.js")
+    script(src="/static/datatables.net-bs/js/dataTables.bootstrap.js")
+    script(src="/static/moment/min/moment-with-locales.min.js")
+    script(src="/static/angular/angular.min.js")
+    script(src="/static/angular-resource/angular-resource.min.js")
+    script(src="/static/angular-ui-bootstrap/dist/ui-bootstrap-tpls.js")
+    script(src="/static/@uirouter/angularjs/release/angular-ui-router.min.js")
+    script(src="/static/bootstrap-switch/dist/js/bootstrap-switch.min.js")
+    link(
+      rel="stylesheet",
+      href="/static/bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.min.css"
+    )
+    script(
+      src="/static/angular-bootstrap-switch/dist/angular-bootstrap-switch.min.js"
+    )
+
+    script(src="/static/bootstrap-daterangepicker/daterangepicker.js")
+    link(
+      rel="stylesheet",
+      href="/static/bootstrap-daterangepicker/daterangepicker.css"
+    )
+    link(rel="stylesheet", href="/static/chosen-js/chosen.min.css")
+    script(src="/static/chosen-js/chosen.jquery.min.js")
+    script(src="/static/angular-chosen-localytics/dist/angular-chosen.min.js")
+    script(src="/static/chart.js/dist/chart.umd.js")
+    script(defer, src="/public/dist/runtime.bundle.js")
+    script(defer, src="/public/dist/main.bundle.js")
+
+  body(ng-app="filebump_web")
+    nav.navbar.navbar-inverse
+      a.navbar-brand(href="http://connect.mobilon.ru") Mobilon Connect
+      a.navbar-text(href="/") Filebump Web
+      ul.nav.navbar-nav
+        li
+          a= account.name
+      ul.nav.navbar-nav.pull-right
+        li
+          a= user.name
+    .container
+      .row
+        ul.nav.nav-pills.nav-menu
+          li(ui-sref="journals", ui-sref-active="active")
+            a(href="#") Журналы
+          li(ui-sref="reports", ui-sref-active="active")
+            a(href="#") Отчеты
+          // INJECT PLOP IMPORT MODULE
+          li(ui-sref="links", ui-sref-active="active")
+            a(href="#") Ссылки
+        ui-view

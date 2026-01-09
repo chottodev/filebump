@@ -1,0 +1,32 @@
+table.table.table-bordered(files-table, style="width: 100%")
+  thead
+    tr
+      th date
+      th fileId
+      th name
+      th size
+      th mimetype
+      //- th encoding
+      //- th md5
+    tr
+      th
+        input.form-control(
+          type="text",
+          placeholder="Дата",
+          date-time-range-picker,
+          period="$ctrl.filter.period"
+        )
+      th
+        input.form-control(
+            style="max-width: 110px",
+            ng-model="$ctrl.filter.fileid",
+            placeholder="fileId"
+          ) 
+      th
+      th 
+      th
+        input.form-control(
+          style="max-width: 110px",
+          ng-model="$ctrl.filter.mimetype",
+          placeholder="mimetype"
+        ) 

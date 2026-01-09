@@ -1,0 +1,36 @@
+div(ng-if="$ctrl.report.$resolved")
+  files-api-chart(report="$ctrl.report")
+table.table.table-bordered(files-api-table, style="width: 100%")
+  thead
+    tr
+      th date
+      th fileId
+      th endpoint
+      th result
+      th subresult
+    tr
+      th
+        input.form-control(
+          type="text",
+          placeholder="Дата",
+          date-time-range-picker,
+          period="$ctrl.filter.period"
+        )
+      th
+        input.form-control(
+          style="max-width: 110px",
+          ng-model="$ctrl.filter.fileid",
+          placeholder="fileId"
+        ) 
+      th 
+        input.form-control(
+            style="max-width: 110px",
+            ng-model="$ctrl.filter.endpoint",
+            placeholder="endpoint"
+          )
+      th(style="max-width: 110px")
+        select.form-control(ng-model="$ctrl.filter.result")
+          option(value="") Все
+          option(value="OK") ok
+          option(value="FAIL") fail
+      th
