@@ -57,11 +57,14 @@ curl \
 
 ## Конфигурация
 
-Основные настройки в `config/default.js`:
+Конфигурация использует `dotenv` и переменные окружения. Каждый пакет имеет свою конфигурацию в `src/config/index.js`.
 
-- **File API**: порт 3007, директория загрузок `/tmp/uploads`
-- **Admin Web**: порт 33033, аутентификация через Mobilon Platform
-- **Cron**: автоматическая очистка файлов каждый месяц
+Основные настройки через переменные окружения (`.env`):
+
+- **Client API**: `CLIENT_API_PORT=3007`, `CLIENT_API_UPLOAD_DIR=/tmp/uploads`
+- **Admin Web**: `ADMIN_WEB_PORT=33033`
+- **Cron Jobs**: `CLEAR_FILES_TASK_SCHEDULE=0 0 1 * * *` (автоматическая очистка файлов)
+- **MongoDB**: `LOGS_MONGODB`, `SETTINGS_MONGODB`
 
 ## Документация
 

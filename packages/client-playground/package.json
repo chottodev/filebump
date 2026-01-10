@@ -1,0 +1,16 @@
+{
+  "name": "@filebump/client-playground",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node src/index.js",
+    "start": "NODE_ENV=production node src/index.js"
+  },
+  "dependencies": {
+    "@filebump/client-api": "*",
+    "@filebump/utils": "*",
+    "express": "^4.19.2",
+    "dotenv": "^16.4.5"
+  }
+}

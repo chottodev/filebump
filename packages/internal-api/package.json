@@ -1,0 +1,16 @@
+{
+  "name": "@filebump/internal-api",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node src/index.js",
+    "start": "NODE_ENV=production node src/index.js"
+  },
+  "dependencies": {
+    "@filebump/utils": "*",
+    "@filebump/models": "*",
+    "express": "^4.19.2",
+    "dotenv": "^16.4.5"
+  }
+}

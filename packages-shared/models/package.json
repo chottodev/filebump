@@ -1,0 +1,10 @@
+{
+  "name": "@filebump/models",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.js",
+  "dependencies": {
+    "mongoose": "^8.6.0",
+    "dotenv": "^16.4.5"
+  }
+}
