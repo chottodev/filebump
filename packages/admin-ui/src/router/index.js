@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import Journals from '../views/Journals.vue';
 import Reports from '../views/Reports.vue';
 import Links from '../views/Links.vue';
+import Playground from '../views/Playground.vue';
 
 const routes = [
   {
@@ -22,6 +23,11 @@ const routes = [
     path: '/links',
     name: 'Links',
     component: Links,
+  },
+  {
+    path: '/playground',
+    name: 'Playground',
+    component: Playground,
   },
 ];
 

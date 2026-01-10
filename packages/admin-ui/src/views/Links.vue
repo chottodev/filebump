@@ -4,19 +4,24 @@
     <p>Документация API и ссылки</p>
     <div class="links-content">
       <a 
-        href="https://petstore.swagger.io/?url=https://filebump.services.mobilon.ru/api" 
+        :href="clientApiUrl" 
         target="_blank"
         class="link-card"
       >
-        <h3>API Documentation</h3>
-        <p>Swagger документация Client API</p>
+        <h3>Client API Documentation</h3>
+        <p>OpenAPI UI для Client API</p>
+        <p class="link-url">{{ clientApiUrl }}</p>
       </a>
     </div>
   </div>
 </template>
 
 <script setup>
-// Vue 3 Composition API
+import { computed } from 'vue';
+
+// Client API URL - можно настроить через env переменные или конфиг
+const clientApiBaseUrl = import.meta.env.VITE_CLIENT_API_URL || 'http://localhost:3007';
+const clientApiUrl = computed(() => `${clientApiBaseUrl}/api`);
 </script>
 
 <style scoped>
@@ -51,7 +56,14 @@
 }
 
 .link-card p {
-  margin: 0;
+  margin: 0.5rem 0 0 0;
   color: #666;
+}
+
+.link-url {
+  font-size: 0.85rem;
+  color: #999;
+  font-family: monospace;
+  word-break: break-all;
 }
 </style>

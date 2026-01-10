@@ -13,6 +13,9 @@
           <li>
             <router-link to="/links" class="nav-link">Ссылки</router-link>
           </li>
+          <li>
+            <router-link to="/playground" class="nav-link">Playground</router-link>
+          </li>
         </ul>
       </div>
     </nav>
