@@ -1,0 +1,121 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: filebump-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: filebump
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_logs:/data/logs
+    networks:
+      - filebump-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  client-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: production
+    image: filebump:latest
+    container_name: filebump-client-api
+    restart: unless-stopped
+    command: npm run start --workspace=packages/client-api
+    ports:
+      - "3007:3007"
+    environment:
+      NODE_ENV: production
+      PORT: 3007
+      CLIENT_API_PORT: 3007
+      CLIENT_API_BASE_URL: http://localhost:3007
+      CLIENT_API_UPLOAD_DIR: /tmp/uploads
+      CLIENT_API_KEYS: ${CLIENT_API_KEYS:-testKey1,testKey2}
+      LOGS_MONGODB: mongodb://mongodb:27017/filebumb-logs
+      SETTINGS_MONGODB: mongodb://mongodb:27017/filebump-files
+    volumes:
+      - uploads_data:/tmp/uploads
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - filebump-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3007/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  admin-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: production
+    image: filebump:latest
+    container_name: filebump-admin-backend
+    restart: unless-stopped
+    command: sh -c "npm run build --workspace=packages/admin-ui && npm run start --workspace=packages/admin-backend"
+    ports:
+      - "33033:33033"
+    environment:
+      NODE_ENV: production
+      PORT: 33033
+      ADMIN_BACKEND_PORT: 33033
+      SESSION_SECRET: ${SESSION_SECRET:-filebump-admin-secret}
+      LOGS_MONGODB: mongodb://mongodb:27017/filebumb-logs
+      SETTINGS_MONGODB: mongodb://mongodb:27017/filebump-files
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - filebump-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:33033/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  cron-jobs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: production
+    image: filebump:latest
+    container_name: filebump-cron-jobs
+    restart: unless-stopped
+    command: npm run start --workspace=packages/cron-jobs
+    environment:
+      NODE_ENV: production
+      CLEAR_FILES_TASK_SCHEDULE: ${CLEAR_FILES_TASK_SCHEDULE:-0 0 1 * * *}
+      LOGS_MONGODB: mongodb://mongodb:27017/filebumb-logs
+      SETTINGS_MONGODB: mongodb://mongodb:27017/filebump-files
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - filebump-network
+
+networks:
+  filebump-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_logs:
+    driver: local
+  uploads_data:
+    driver: local
