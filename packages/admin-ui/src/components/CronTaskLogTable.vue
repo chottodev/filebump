@@ -1,18 +1,16 @@
 <template>
-  <div class="api-logs-table">
+  <div class="cron-task-log-table">
     <table>
       <thead>
         <tr>
-          <th>File ID</th>
-          <th>Endpoint</th>
+          <th>Task</th>
           <th>Result</th>
           <th>Date</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="log in logs" :key="log._id">
-          <td>{{ log.fileId || '-' }}</td>
-          <td>{{ log.endpoint }}</td>
+          <td>{{ log.task || '-' }}</td>
           <td :class="log.result === 'OK' ? 'status-ok' : 'status-fail'">
             {{ log.result }}
           </td>
@@ -31,7 +29,7 @@ const logs = ref([]);
 
 const loadLogs = async () => {
   try {
-    const response = await api.get('/journals/api', {
+    const response = await api.get('/journals/cron-task-log', {
       params: {
         draw: 1,
         start: 0,
@@ -41,7 +39,7 @@ const loadLogs = async () => {
     });
     logs.value = response.data.data || [];
   } catch (error) {
-    console.error('Error loading logs:', error);
+    console.error('Error loading cron task logs:', error);
   }
 };
 
@@ -51,7 +49,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.api-logs-table {
+.cron-task-log-table {
   overflow-x: auto;
 }
 

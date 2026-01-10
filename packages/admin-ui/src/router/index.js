@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import Data from '../views/Data.vue';
 import Journals from '../views/Journals.vue';
 import Reports from '../views/Reports.vue';
 import Links from '../views/Links.vue';
@@ -7,7 +8,12 @@ import Playground from '../views/Playground.vue';
 const routes = [
   {
     path: '/',
-    redirect: '/journals',
+    redirect: '/data',
+  },
+  {
+    path: '/data',
+    name: 'Data',
+    component: Data,
   },
   {
     path: '/journals',

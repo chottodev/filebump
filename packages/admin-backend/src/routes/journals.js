@@ -1,6 +1,6 @@
 const express = require('express');
 const moment = require('moment');
-const {FileApiLog, File} = require('@filebump/models');
+const {FileApiLog, File, CronTaskLog} = require('@filebump/models');
 const journalsRouter = express.Router();
 
 function findColumnFilter(columns, columnName) {
@@ -87,6 +87,56 @@ journalsRouter.get('/api', async (req, res) => {
       skip: parseInt(req.query.start || 0),
     });
     const count = await FileApiLog.countDocuments(query);
+    res.json({
+      draw: parseInt(req.query.draw),
+      recordsTotal: count,
+      recordsFiltered: count,
+      data: rows,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({error: err.message});
+  }
+});
+
+journalsRouter.get('/cron-task-log', async (req, res) => {
+  const query = {};
+  const columns = req.query.columns;
+  console.log('get /api/journals/cron-task-log');
+
+  const dateFilter = findColumnFilter(columns, 'date');
+  if (dateFilter) {
+    const [start, end] = dateFilter.split(' - ');
+
+    query.date = {
+      $gte: `${start} 00:00:00`,
+      $lte: `${end} 23:59:59`,
+    };
+  } else {
+    query.date = {
+      $gte: moment().format('YYYY-MM-DD 00:00:00'),
+      $lte: moment().format('YYYY-MM-DD 23:59:59'),
+    };
+  }
+
+  const taskFilter = findColumnFilter(columns, 'task');
+  if (taskFilter) {
+    query.task = taskFilter;
+  }
+  const resultFilter = findColumnFilter(columns, 'result');
+  if (resultFilter === 'OK') {
+    query.result = 'OK';
+  } else if (resultFilter === 'FAIL') {
+    query.result = 'FAIL';
+  }
+
+  try {
+    const rows = await CronTaskLog.find(query, null, {
+      sort: '-date',
+      limit: parseInt(req.query.length || 10),
+      skip: parseInt(req.query.start || 0),
+    });
+    const count = await CronTaskLog.countDocuments(query);
     res.json({
       draw: parseInt(req.query.draw),
       recordsTotal: count,

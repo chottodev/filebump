@@ -5,6 +5,9 @@
         <a class="navbar-brand" href="/">Filebump Admin</a>
         <ul class="nav navbar-nav">
           <li>
+            <router-link to="/data" class="nav-link">Данные</router-link>
+          </li>
+          <li>
             <router-link to="/journals" class="nav-link">Журналы</router-link>
           </li>
           <li>
