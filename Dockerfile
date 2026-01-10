@@ -1,7 +1,7 @@
 FROM node:20.10.0
 
 RUN apt-get update \
-    && apt-get install -y ffmpeg \
+    && apt-get install -y ffmpeg wget curl \
     && apt-get clean
 
 ARG NODE_ENV
