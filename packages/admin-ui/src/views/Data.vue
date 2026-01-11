@@ -8,10 +8,20 @@
       >
         Файлы
       </button>
+      <button 
+        @click="activeTab = 'meta'" 
+        :class="{ active: activeTab === 'meta' }"
+      >
+        Meta
+      </button>
     </div>
     
     <div v-if="activeTab === 'files'" class="tab-content">
       <FilesTable />
+    </div>
+    
+    <div v-if="activeTab === 'meta'" class="tab-content">
+      <MetaTable />
     </div>
   </div>
 </template>
@@ -19,6 +29,7 @@
 <script setup>
 import { ref } from 'vue';
 import FilesTable from '../components/FilesTable.vue';
+import MetaTable from '../components/MetaTable.vue';
 
 const activeTab = ref('files');
 </script>

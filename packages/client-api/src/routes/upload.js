@@ -46,7 +46,20 @@ const postUploadAction = async (metadata) => {
   }
 };
 
-module.exports = (FileApiLog, File) => {
+// Вспомогательная функция для сохранения метаданных в БД
+const saveMetadata = async (Meta, fileId, metadata) => {
+  const metadataEntries = Object.entries(metadata);
+  const promises = metadataEntries.map(([key, value]) => {
+    return Meta.findOneAndUpdate(
+      { fileId, key },
+      { fileId, key, value: String(value) },
+      { upsert: true, new: true }
+    );
+  });
+  await Promise.all(promises);
+};
+
+module.exports = (FileApiLog, File, Meta) => {
   let requestCounter = 0;
   async function post(req, res) {
     requestCounter++;
@@ -81,7 +94,6 @@ module.exports = (FileApiLog, File) => {
       await fs.mkdir(subDirPath, {recursive: true});
 
       const uploadPathFile = path.join(subDirPath, fileId);
-      const uploadPathMetadata = path.join(subDirPath, fileId + '.json');
 
       const metadata = {
         ...prepareMetadata(uploadedFile),
@@ -91,7 +103,9 @@ module.exports = (FileApiLog, File) => {
       log('metadata', JSON.stringify(metadata));
 
       await uploadedFile.mv(uploadPathFile);
-      await fs.writeFile(uploadPathMetadata, JSON.stringify(metadata, null, 2));
+      // Сохраняем метаданные в БД вместо JSON файла
+      await saveMetadata(Meta, fileId, metadata);
+      log('metadata saved to DB for fileId:', fileId);
 
       const resData = {
         fileId,

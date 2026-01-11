@@ -1,6 +1,6 @@
 const fileHanlder = require('./fileHandler.js');
 
-module.exports = (FileApiLog) => {
+module.exports = (FileApiLog, Meta) => {
   return {
     parameters: [
       {
@@ -18,6 +18,6 @@ module.exports = (FileApiLog) => {
         description: 'Name of the file, used to specify the file extension',
       },
     ],
-    get: fileHanlder(FileApiLog).get,
+    get: fileHanlder(FileApiLog, Meta).get,
   };
 };

@@ -6,7 +6,22 @@ const {constants: RESULT} = require('@filebump/utils');
 
 let requestCounter = 0;
 
-module.exports = (FileApiLog) => {
+// Вспомогательная функция для получения метаданных из БД
+const getMetadata = async (Meta, fileId) => {
+  try {
+    const metaRecords = await Meta.find({ fileId });
+    const metadata = {};
+    metaRecords.forEach((record) => {
+      metadata[record.key] = record.value;
+    });
+    return metadata;
+  } catch (err) {
+    console.error('Error getting metadata from DB:', err);
+    return {};
+  }
+};
+
+module.exports = (FileApiLog, Meta) => {
   async function get(req, res) {
     requestCounter++;
     const log = (...args) => {
@@ -25,7 +40,6 @@ module.exports = (FileApiLog) => {
         log('required mp3 file', uploadPathFile);
         isRequiredMp3 = true;
       }
-      const uploadPathMetadata = path.join(subDirPath, fileId + '.json');
       try {
         await fs.access(uploadPathFile);
       } catch (err) {
@@ -40,9 +54,33 @@ module.exports = (FileApiLog) => {
         log('not found file', fileId);
         return;
       }
-      const metadataFileData = await fs.readFile(uploadPathMetadata);
-      const metadata = JSON.parse(metadataFileData);
+      // Получаем метаданные из БД вместо JSON файла
+      const metadata = await getMetadata(Meta, fileId);
       log('metadata', metadata);
+      
+      // Определяем Content-Type с fallback
+      let contentType = 'application/octet-stream'; // значение по умолчанию
+      if (isRequiredMp3) {
+        contentType = 'audio/mpeg';
+      } else if (metadata.mimetype) {
+        contentType = metadata.mimetype;
+      } else {
+        // Fallback: пытаемся определить по расширению файла
+        const ext = path.extname(uploadPathFile).toLowerCase();
+        const mimeTypes = {
+          '.jpg': 'image/jpeg',
+          '.jpeg': 'image/jpeg',
+          '.png': 'image/png',
+          '.gif': 'image/gif',
+          '.pdf': 'application/pdf',
+          '.mp3': 'audio/mpeg',
+          '.mp4': 'video/mp4',
+        };
+        if (mimeTypes[ext]) {
+          contentType = mimeTypes[ext];
+        }
+      }
+      
       await FileApiLog.create({
         date: moment().format('YYYY-MM-DD HH:mm:ss'),
         fileId,
@@ -52,7 +90,7 @@ module.exports = (FileApiLog) => {
       });
       res.sendFile(uploadPathFile, {
         headers: {
-          'Content-Type': isRequiredMp3 ? 'audio/mpeg' : metadata.mimetype,
+          'Content-Type': contentType,
         },
       });
     } catch (err) {

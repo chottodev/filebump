@@ -1,6 +1,6 @@
 const express = require('express');
 const moment = require('moment');
-const {FileApiLog, File, CronTaskLog} = require('@filebump/models');
+const {FileApiLog, File, CronTaskLog, Meta} = require('@filebump/models');
 const journalsRouter = express.Router();
 
 function findColumnFilter(columns, columnName) {
@@ -137,6 +137,62 @@ journalsRouter.get('/cron-task-log', async (req, res) => {
       skip: parseInt(req.query.start || 0),
     });
     const count = await CronTaskLog.countDocuments(query);
+    res.json({
+      draw: parseInt(req.query.draw),
+      recordsTotal: count,
+      recordsFiltered: count,
+      data: rows,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({error: err.message});
+  }
+});
+
+journalsRouter.get('/files/:fileId/metadata', async (req, res) => {
+  const {fileId} = req.params;
+  console.log('get /api/journals/files/:fileId/metadata', fileId);
+  
+  try {
+    const metaRecords = await Meta.find({fileId});
+    const metadata = {};
+    metaRecords.forEach((record) => {
+      metadata[record.key] = record.value;
+    });
+    
+    res.json({
+      fileId,
+      metadata,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({error: err.message});
+  }
+});
+
+journalsRouter.get('/meta', async (req, res) => {
+  const query = {};
+  console.log('get /api/journals/meta');
+  
+  // Фильтры для частичного совпадения
+  if (req.query.fileId) {
+    query.fileId = {$regex: req.query.fileId, $options: 'i'};
+  }
+  if (req.query.key) {
+    query.key = {$regex: req.query.key, $options: 'i'};
+  }
+  if (req.query.value) {
+    query.value = {$regex: req.query.value, $options: 'i'};
+  }
+  
+  try {
+    const rows = await Meta.find(query, null, {
+      sort: '-_id',
+      limit: parseInt(req.query.length || 50),
+      skip: parseInt(req.query.start || 0),
+    });
+    const count = await Meta.countDocuments(query);
+    
     res.json({
       draw: parseInt(req.query.draw),
       recordsTotal: count,

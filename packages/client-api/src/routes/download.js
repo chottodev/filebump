@@ -36,6 +36,19 @@ function getExtensionFromLink(link) {
   return result?.[1];
 }
 
+// Вспомогательная функция для сохранения метаданных в БД
+const saveMetadata = async (Meta, fileId, metadata) => {
+  const metadataEntries = Object.entries(metadata);
+  const promises = metadataEntries.map(([key, value]) => {
+    return Meta.findOneAndUpdate(
+      { fileId, key },
+      { fileId, key, value: String(value) },
+      { upsert: true, new: true }
+    );
+  });
+  await Promise.all(promises);
+};
+
 const postUploadAction = async (metadata) => {
   if (metadata.mimetype !== 'audio/ogg' && metadata.mimetype !== 'audio/mpeg') {
     return console.log(
@@ -60,7 +73,7 @@ const postUploadAction = async (metadata) => {
   }
 };
 
-module.exports = (FileApiLog) => {
+module.exports = (FileApiLog, Meta) => {
   async function post(req, res) {
     console.log('post /download');
     const startTime = performance.now();
@@ -118,10 +131,10 @@ module.exports = (FileApiLog) => {
       await fs.mkdir(subDirPath, {recursive: true});
 
       const uploadPathFile = path.join(subDirPath, fileId);
-      const uploadPathMetadata = path.join(subDirPath, fileId + '.json');
 
       await fs.writeFile(uploadPathFile, response.data, {encoding: 'binary'});
-      await fs.writeFile(uploadPathMetadata, JSON.stringify(metadata, null, 2));
+      // Сохраняем метаданные в БД вместо JSON файла
+      await saveMetadata(Meta, fileId, metadata);
 
       await FileApiLog.create({
         date: moment().format('YYYY-MM-DD HH:mm:ss'),

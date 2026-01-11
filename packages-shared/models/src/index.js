@@ -8,13 +8,16 @@ const settingsDbConnection = mongoose.createConnection(config.settingsMongodb);
 const {FileApiLogSchema} = require('./logs/file-api-log.js');
 const {cronTasksLogSchema} = require('./logs/cron-tasks-log.js');
 const {FileSchema} = require('./base/File.js');
+const {MetaSchema} = require('./base/Meta.js');
 
 const FileApiLog = logsDbConnection.model('fileApiLog', FileApiLogSchema);
 const CronTaskLog = logsDbConnection.model('cronTasksLog', cronTasksLogSchema);
 const File = settingsDbConnection.model('file', FileSchema);
+const Meta = settingsDbConnection.model('meta', MetaSchema);
 
 module.exports = {
   FileApiLog,
   CronTaskLog,
   File,
+  Meta,
 };

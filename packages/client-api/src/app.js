@@ -8,6 +8,7 @@ const fileUpload = require('express-fileupload');
 function createApp({
   FileApiLog,
   File,
+  Meta,
 }) {
   const app = express();
 
@@ -41,6 +42,7 @@ function createApp({
     dependencies: {
       FileApiLog,
       File,
+      Meta,
     },
     securityHandlers: {
       token: async function(req, scopes, definition) {

@@ -2,30 +2,6 @@
   <div class="download">
     <h2>Download File</h2>
     
-    <div class="config-section">
-      <div class="form-group">
-        <label for="api-url">API URL:</label>
-        <input 
-          id="api-url"
-          type="text" 
-          v-model="apiUrl" 
-          placeholder="http://localhost:3007"
-          class="form-control"
-        />
-      </div>
-      
-      <div class="form-group">
-        <label for="api-key">API Key:</label>
-        <input 
-          id="api-key"
-          type="text" 
-          v-model="apiKey" 
-          placeholder="testKey1"
-          class="form-control"
-        />
-      </div>
-    </div>
-
     <div class="download-section">
       <div class="form-group">
         <label for="file-id-input">File ID:</label>
@@ -94,11 +70,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import FilebumpClient from '../../services/filebumpClient.js';
 
-const apiUrl = ref('http://localhost:3007');
-const apiKey = ref('testKey1');
+// Получаем значения из родительского компонента
+const apiUrl = inject('apiUrl');
+const apiKey = inject('apiKey');
+
 const fileId = ref('');
 const downloading = ref(false);
 const gettingInfo = ref(false);
