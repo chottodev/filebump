@@ -11,6 +11,6 @@ module.exports = {
   keys: process.env.CLIENT_API_KEYS ? process.env.CLIENT_API_KEYS.split(',') : ['testKey1', 'testKey2'],
   
   // MongoDB
-  logsMongodb: process.env.LOGS_MONGODB || process.env.MONGODB_LOGS || 'mongodb://mongodb/filebumb-logs',
-  settingsMongodb: process.env.SETTINGS_MONGODB || process.env.MONGODB_SETTINGS || 'mongodb://mongodb/filebump-files',
+  logsMongodb: process.env.MONGODB_LOGS || 'mongodb://mongodb/filebumb-logs',
+  settingsMongodb: process.env.MONGODB_SETTINGS || 'mongodb://mongodb/filebump-files',
 };
