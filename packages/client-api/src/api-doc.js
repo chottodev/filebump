@@ -47,6 +47,24 @@ module.exports = {
         },
       },
     },
+    File_metadata: {
+      type: 'object',
+      properties: {
+        status: {
+          type: 'string',
+        },
+        fileId: {
+          type: 'string',
+        },
+        metadata: {
+          type: 'object',
+          description: 'Object with metadata key-value pairs',
+          additionalProperties: {
+            type: 'string',
+          },
+        },
+      },
+    },
     Error_Not_Found: {
       type: 'object',
       properties: {

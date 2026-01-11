@@ -10,6 +10,7 @@
     "test": "echo \"No tests specified\" && exit 0"
   },
   "dependencies": {
+    "@filebump/filebump-api-client": "*",
     "vue": "^3.4.15",
     "vue-router": "^4.3.0",
     "axios": "^1.7.7",

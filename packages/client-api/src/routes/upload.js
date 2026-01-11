@@ -18,6 +18,82 @@ const prepareMetadata = (uploadedFile) => {
   };
 };
 
+/**
+ * Санитизация ключей метаданных
+ * Разрешает только буквы, цифры, дефисы, подчеркивания
+ * Максимальная длина 100 символов
+ */
+const sanitizeMetadataKey = (key) => {
+  if (typeof key !== 'string') {
+    return null;
+  }
+  // Удаляем все символы кроме букв, цифр, дефисов и подчеркиваний
+  const sanitized = key.replace(/[^a-zA-Z0-9_-]/g, '');
+  // Ограничиваем длину
+  if (sanitized.length === 0 || sanitized.length > 100) {
+    return null;
+  }
+  return sanitized;
+};
+
+/**
+ * Санитизация значений метаданных
+ * Защита от опасных символов и инъекций
+ * Максимальная длина 10000 символов
+ * 
+ * Примечание: HTML-экранирование не выполняется при сохранении в БД,
+ * это нужно делать при выводе данных в HTML
+ */
+const sanitizeMetadataValue = (value) => {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  
+  const strValue = String(value);
+  
+  // Ограничиваем длину
+  if (strValue.length > 10000) {
+    return strValue.substring(0, 10000);
+  }
+  
+  // Удаляем управляющие символы (нулевые байты, переводы строк и т.д.)
+  // которые могут быть опасными при сохранении в БД
+  // Разрешаем обычные символы Unicode для поддержки разных языков
+  const sanitized = strValue.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  
+  return sanitized;
+};
+
+/**
+ * Извлекает и санитизирует дополнительные метаданные из req.body
+ * Исключает служебные поля (file, fileId)
+ */
+const extractCustomMetadata = (body) => {
+  const customMetadata = {};
+  const excludedKeys = ['file', 'fileId']; // Служебные поля, которые не должны быть метаданными
+  
+  if (!body || typeof body !== 'object') {
+    return customMetadata;
+  }
+  
+  for (const [key, value] of Object.entries(body)) {
+    // Пропускаем служебные поля
+    if (excludedKeys.includes(key)) {
+      continue;
+    }
+    
+    const sanitizedKey = sanitizeMetadataKey(key);
+    if (!sanitizedKey) {
+      continue; // Пропускаем невалидные ключи
+    }
+    
+    const sanitizedValue = sanitizeMetadataValue(value);
+    customMetadata[sanitizedKey] = sanitizedValue;
+  }
+  
+  return customMetadata;
+};
+
 const postUploadAction = async (metadata) => {
   if (metadata.mimetype !== 'audio/ogg' &&
     metadata.mimetype !== 'audio/mpeg' &&
@@ -95,10 +171,15 @@ module.exports = (FileApiLog, File, Meta) => {
 
       const uploadPathFile = path.join(subDirPath, fileId);
 
+      // Извлекаем и санитизируем дополнительные метаданные из req.body
+      const customMetadata = extractCustomMetadata(req.body);
+      log('custom metadata from request:', JSON.stringify(customMetadata));
+
       const metadata = {
         ...prepareMetadata(uploadedFile),
         fileId,
         key,
+        ...customMetadata, // Добавляем пользовательские метаданные
       };
       log('metadata', JSON.stringify(metadata));
 

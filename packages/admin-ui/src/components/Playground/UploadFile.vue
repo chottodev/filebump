@@ -13,6 +13,49 @@
           class="form-control"
         />
       </div>
+      
+      <div class="form-group">
+        <div class="metadata-header">
+          <label>Metadata (optional):</label>
+          <button 
+            @click="addMetadataField" 
+            type="button"
+            class="btn btn-sm btn-secondary"
+          >
+            + Add Field
+          </button>
+        </div>
+        
+        <div v-if="metadataFields.length === 0" class="metadata-empty">
+          No metadata fields. Click "+ Add Field" to add custom metadata.
+        </div>
+        
+        <div 
+          v-for="(field, index) in metadataFields" 
+          :key="index" 
+          class="metadata-field"
+        >
+          <input 
+            type="text" 
+            v-model="field.key" 
+            placeholder="Key (e.g., tenantId)"
+            class="form-control metadata-key"
+          />
+          <input 
+            type="text" 
+            v-model="field.value" 
+            placeholder="Value (e.g., test1)"
+            class="form-control metadata-value"
+          />
+          <button 
+            @click="removeMetadataField(index)" 
+            type="button"
+            class="btn btn-sm btn-danger"
+          >
+            Remove
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="upload-section">
@@ -63,7 +106,7 @@
 
 <script setup>
 import { ref, inject } from 'vue';
-import FilebumpClient from '../../services/filebumpClient.js';
+import { FilebumpClient } from '@filebump/filebump-api-client';
 
 // Получаем значения из родительского компонента
 const apiUrl = inject('apiUrl');
@@ -73,6 +116,7 @@ const fileId = ref('');
 const selectedFile = ref(null);
 const uploading = ref(false);
 const result = ref(null);
+const metadataFields = ref([]);
 
 const handleFileSelect = (event) => {
   const file = event.target.files[0];
@@ -90,6 +134,14 @@ const formatFileSize = (bytes) => {
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 };
 
+const addMetadataField = () => {
+  metadataFields.value.push({ key: '', value: '' });
+};
+
+const removeMetadataField = (index) => {
+  metadataFields.value.splice(index, 1);
+};
+
 const uploadFile = async () => {
   if (!selectedFile.value) return;
 
@@ -103,7 +155,18 @@ const uploadFile = async () => {
     });
 
     const uploadFileId = fileId.value.trim() || null;
-    const response = await client.upload(selectedFile.value, uploadFileId);
+    
+    // Формируем объект метаданных из полей формы
+    const metadata = {};
+    metadataFields.value.forEach(field => {
+      const key = field.key?.trim();
+      const value = field.value?.trim();
+      if (key && value !== '') {
+        metadata[key] = value;
+      }
+    });
+    
+    const response = await client.upload(selectedFile.value, uploadFileId, metadata);
 
     result.value = {
       success: true,
@@ -142,6 +205,67 @@ const uploadFile = async () => {
   margin-bottom: 0.5rem;
   font-weight: bold;
   color: #333;
+}
+
+.metadata-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.metadata-header label {
+  margin-bottom: 0;
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+.metadata-empty {
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border: 1px dashed #dee2e6;
+  border-radius: 4px;
+  color: #6c757d;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.metadata-field {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  align-items: center;
+}
+
+.metadata-key {
+  flex: 1;
+  min-width: 0;
+}
+
+.metadata-value {
+  flex: 1;
+  min-width: 0;
 }
 
 .form-control {

@@ -1,4 +1,15 @@
-const FormData = require('form-data');
+// Универсальная поддержка FormData для Node.js и браузера
+let FormDataLib;
+let isNode = typeof window === 'undefined';
+
+if (isNode) {
+  // В Node.js используем библиотеку form-data
+  FormDataLib = require('form-data');
+} else {
+  // В браузере используем нативный FormData
+  FormDataLib = FormData;
+}
+
 const axios = require('axios');
 
 class FilebumpClient {
@@ -7,14 +18,37 @@ class FilebumpClient {
     this.key = key;
   }
 
-  async upload(data, filename, fileId = null) {
-    const form = new FormData();
-    form.append('file', data, filename);
+  async upload(data, filename, fileId = null, metadata = {}) {
+    const form = isNode ? new FormDataLib() : new FormData();
+    
+    if (isNode) {
+      // Node.js: используем form-data API
+      form.append('file', data, filename);
+      // Добавляем метаданные
+      if (metadata && typeof metadata === 'object') {
+        for (const [key, value] of Object.entries(metadata)) {
+          if (key && value !== null && value !== undefined) {
+            form.append(key, String(value));
+          }
+        }
+      }
+    } else {
+      // Браузер: используем нативный FormData API
+      form.append('file', data);
+      // Добавляем метаданные
+      if (metadata && typeof metadata === 'object') {
+        for (const [key, value] of Object.entries(metadata)) {
+          if (key && value !== null && value !== undefined) {
+            form.append(key, String(value));
+          }
+        }
+      }
+    }
 
     const request_config = {
       headers: {
         'X-API-Key': this.key,
-        ...form.getHeaders(),
+        ...(isNode && form.getHeaders ? form.getHeaders() : {}),
       }
     };
 
@@ -34,6 +68,18 @@ class FilebumpClient {
     return await axios.post(url, {url: downloadUrl}, request_config);
   }
 
+  async downloadFile(fileId) {
+    const request_config = {
+      headers: {
+        'X-API-Key': this.key,
+      },
+      responseType: 'blob',
+    };
+
+    const url = `${this.url}/file/${fileId}`;
+    return await axios.get(url, request_config);
+  }
+
   async file(fileId) {
     const request_config = {
       headers: {
@@ -43,6 +89,29 @@ class FilebumpClient {
 
     const url = `${this.url}/file/${fileId}`;
     return await axios.get(url, request_config);
+  }
+
+  async getMetadata(fileId) {
+    const request_config = {
+      headers: {
+        'X-API-Key': this.key,
+      }
+    };
+
+    const url = `${this.url}/file/${fileId}/metadata`;
+    return await axios.get(url, request_config);
+  }
+
+  async uploadByUrl(sourceUrl, fileId = null) {
+    const request_config = {
+      headers: {
+        'X-API-Key': this.key,
+        'Content-Type': 'application/json',
+      }
+    };
+
+    const url = `${this.url}/download`;
+    return await axios.post(url, {url: sourceUrl}, request_config);
   }
 }
 

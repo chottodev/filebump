@@ -71,7 +71,7 @@
 
 <script setup>
 import { ref, inject } from 'vue';
-import FilebumpClient from '../../services/filebumpClient.js';
+import { FilebumpClient } from '@filebump/filebump-api-client';
 
 // Получаем значения из родительского компонента
 const apiUrl = inject('apiUrl');

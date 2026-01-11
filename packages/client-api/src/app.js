@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const openapi = require('express-openapi');
 const fileUpload = require('express-fileupload');
+const swaggerUi = require('swagger-ui-express');
 // const checkAuthHeader = require('check-auth-header');
 
 function createApp({
@@ -57,8 +58,27 @@ function createApp({
       {path: '/download', module: require('./routes/download')},
       {path: '/file/{fileId}', module: require('./routes/file')},
       {path: '/file/{fileId}/{fileName}', module: require('./routes/fileName')},
+      {path: '/file/{fileId}/metadata', module: require('./routes/metadata')},
     ],
     promiseMode: true,
+  });
+
+  // Добавляем Swagger UI для просмотра API документации
+  // Спецификация загружается динамически с /api (который предоставляет express-openapi)
+  app.use('/api-docs', swaggerUi.serve);
+  app.get('/api-docs', (req, res, next) => {
+    // Используем относительный URL для загрузки спецификации
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const swaggerUrl = `${protocol}://${host}/api`;
+    
+    swaggerUi.setup(null, {
+      swaggerOptions: {
+        url: swaggerUrl,
+      },
+      customCss: '.swagger-ui .topbar { display: none }',
+      customSiteTitle: 'FileBump API Documentation',
+    })(req, res, next);
   });
 
   return app;

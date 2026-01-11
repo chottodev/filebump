@@ -74,6 +74,7 @@
 import { ref, onMounted } from 'vue';
 import api from '../services/api';
 import axios from 'axios';
+import { FilebumpClient } from '@filebump/filebump-api-client';
 
 const files = ref([]);
 const downloading = ref(null);
@@ -85,6 +86,12 @@ const metadataError = ref(null);
 // URL client-api для скачивания файлов
 const clientApiUrl = import.meta.env.VITE_CLIENT_API_URL || 'http://localhost:3007';
 const clientApiKey = import.meta.env.VITE_CLIENT_API_KEY || 'testKey1';
+
+// Инициализируем FilebumpClient для работы с метаданными
+const filebumpClient = new FilebumpClient({
+  url: clientApiUrl,
+  key: clientApiKey,
+});
 
 const loadFiles = async () => {
   try {
@@ -171,7 +178,7 @@ const showMetadata = async (file) => {
   metadataError.value = null;
   
   try {
-    const response = await api.get(`/journals/files/${file.fileId}/metadata`);
+    const response = await filebumpClient.getMetadata(file.fileId);
     currentMetadata.value = response.data;
   } catch (error) {
     console.error('Error loading metadata:', error);

@@ -4,6 +4,10 @@
   "description": "Client library for Filebump Client API",
   "private": true,
   "main": "src/index.js",
+  "module": "src/client.esm.js",
+  "browser": {
+    "./src/index.js": "./src/client.esm.js"
+  },
   "scripts": {
     "test": "echo \"No tests specified\" && exit 0"
   },
