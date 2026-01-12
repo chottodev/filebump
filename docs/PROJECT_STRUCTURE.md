@@ -8,7 +8,7 @@
 
 ### Бекенд процессы
 
-1. **client-api** - Клиентское API
+1. **file-api** - File API
 2. **admin-api** - API для админ-панели
 3. **internal-api** - API для взаимодействия с другими бекендами (может быть несколько)
 4. **cron-jobs** - Крон-задачи
@@ -23,7 +23,7 @@
 
 ```
 admin-web → admin-api
-client-playground → client-api
+client-playground → file-api
 ```
 
 ## Workspaces - что это?
@@ -138,7 +138,7 @@ packages:
 ```
 structure-apps/
 ├── packages/
-│   ├── client-api/                    # Клиентское API
+│   ├── file-api/                      # File API
 │   │   ├── src/
 │   │   │   ├── routes/                # Маршруты API
 │   │   │   ├── controllers/           # Контроллеры
@@ -249,7 +249,7 @@ structure-apps/
 │   ├── README.md                      # Общая документация
 │   ├── architecture.md                # Архитектура системы
 │   ├── api/
-│   │   ├── client-api.md              # Документация клиентского API
+│   │   ├── file-api.md                 # Документация File API
 │   │   ├── admin-api.md               # Документация админ API
 │   │   └── internal-api.md            # Документация внутреннего API
 │   ├── frontend/
@@ -272,7 +272,7 @@ structure-apps/
 Каждое приложение, которое работает с БД, имеет свою директорию `migrations/`:
 
 ```
-packages/client-api/
+packages/file-api/
 ├── migrations/
 │   ├── 001_create_users_table.js
 │   ├── 002_create_orders_table.js
@@ -318,7 +318,7 @@ packages-shared/
 
 **Конфигурация БД через dotenv:**
 ```env
-# packages/client-api/.env
+# packages/file-api/.env
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=client_db
@@ -345,7 +345,7 @@ DB_ANALYTICS_NAME=analytics_db
   ],
   "scripts": {
     "install:all": "npm install",
-    "dev:client-api": "npm run dev --workspace=packages/client-api",
+    "dev:file-api": "npm run dev --workspace=packages/file-api",
     "dev:admin-api": "npm run dev --workspace=packages/admin-api",
     "dev:admin-web": "npm run dev --workspace=packages/admin-web",
     "build:all": "npm run build --workspaces"
@@ -356,11 +356,11 @@ DB_ANALYTICS_NAME=analytics_db
 }
 ```
 
-### package.json для API (например, client-api)
+### package.json для API (например, file-api)
 
 ```json
 {
-  "name": "@structure-apps/client-api",
+  "name": "@structure-apps/file-api",
   "version": "1.0.0",
   "private": true,
   "main": "src/index.js",
@@ -421,7 +421,7 @@ DB_ANALYTICS_NAME=analytics_db
 }
 ```
 
-### Пример конфигурации с dotenv (client-api/src/config/index.js)
+### Пример конфигурации с dotenv (file-api/src/config/index.js)
 
 ```javascript
 require('dotenv').config();
@@ -461,7 +461,7 @@ module.exports = {
 
 - **Формат**: `@structure-apps/<package-name>`
 - **Примеры**:
-  - `@structure-apps/client-api`
+  - `@structure-apps/file-api`
   - `@structure-apps/admin-api`
   - `@structure-apps/admin-web`
   - `@structure-apps/types`
@@ -488,13 +488,13 @@ admin-web
   └─→ @structure-apps/types
 
 client-playground
-  └─→ client-api
+  └─→ file-api
   └─→ @structure-apps/types
 
 admin-api
   └─→ @structure-apps/types
 
-client-api
+file-api
   └─→ @structure-apps/types
 
 internal-api
@@ -502,11 +502,11 @@ internal-api
 
 cron-jobs
   └─→ @structure-apps/types
-  └─→ (может использовать client-api, admin-api)
+  └─→ (может использовать file-api, admin-api)
 
 queue-workers
   └─→ @structure-apps/types
-  └─→ (может использовать client-api, admin-api)
+  └─→ (может использовать file-api, admin-api)
 ```
 
 ### Указание зависимостей
@@ -543,7 +543,7 @@ docs/
 ├── README.md              # Общий обзор проекта
 ├── architecture.md        # Архитектура системы (общая)
 ├── api/                   # Документация API
-│   ├── client-api.md
+│   ├── file-api.md
 │   ├── admin-api.md
 │   └── internal-api.md
 ├── frontend/              # Документация фронтенда
@@ -563,17 +563,17 @@ docs/
 npm install
 
 # Установить зависимости для конкретного пакета
-npm install --workspace=packages/client-api
+npm install --workspace=packages/file-api
 ```
 
 ### Запуск приложений
 
 ```bash
 # Запуск конкретного приложения
-npm run dev --workspace=packages/client-api
+npm run dev --workspace=packages/file-api
 
 # Или из корня (если настроены скрипты)
-npm run dev:client-api
+npm run dev:file-api
 ```
 
 ### Сборка

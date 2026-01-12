@@ -4,13 +4,13 @@
     <p>Документация API и ссылки</p>
     <div class="links-content">
       <a 
-        :href="clientApiUrl" 
+        :href="fileApiUrl" 
         target="_blank"
         class="link-card"
       >
-        <h3>Client API Documentation</h3>
-        <p>OpenAPI UI для Client API</p>
-        <p class="link-url">{{ clientApiUrl }}</p>
+        <h3>File API Documentation</h3>
+        <p>OpenAPI UI для File API</p>
+        <p class="link-url">{{ fileApiUrl }}</p>
       </a>
     </div>
   </div>
@@ -19,9 +19,9 @@
 <script setup>
 import { computed } from 'vue';
 
-// Client API URL - можно настроить через env переменные или конфиг
-const clientApiBaseUrl = import.meta.env.VITE_CLIENT_API_URL || 'http://localhost:3007';
-const clientApiUrl = computed(() => `${clientApiBaseUrl}/api`);
+// File API URL - можно настроить через env переменные или конфиг
+const fileApiBaseUrl = import.meta.env.VITE_FILE_API_URL || 'http://localhost:3007';
+const fileApiUrl = computed(() => `${fileApiBaseUrl}/api`);
 </script>
 
 <style scoped>

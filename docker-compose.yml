@@ -21,25 +21,25 @@ services:
       retries: 5
       start_period: 10s
 
-  client-api:
+  file-api:
     build:
       context: .
       dockerfile: Dockerfile
       args:
         NODE_ENV: production
     image: filebump:latest
-    container_name: filebump-client-api
+    container_name: filebump-file-api
     restart: unless-stopped
-    command: npm run start --workspace=packages/client-api
+    command: npm run start --workspace=packages/file-api
     ports:
       - "3007:3007"
     environment:
       NODE_ENV: production
       PORT: 3007
-      CLIENT_API_PORT: 3007
-      CLIENT_API_BASE_URL: http://localhost:3007
-      CLIENT_API_UPLOAD_DIR: /tmp/uploads
-      CLIENT_API_KEYS: ${CLIENT_API_KEYS:-testKey1,testKey2}
+      FILE_API_PORT: 3007
+      FILE_API_BASE_URL: http://localhost:3007
+      FILE_API_UPLOAD_DIR: /tmp/uploads
+      FILE_API_KEYS: ${FILE_API_KEYS:-testKey1,testKey2}
       MONGODB_LOGS: mongodb://mongodb:27017/filebumb-logs
       MONGODB_SETTINGS: mongodb://mongodb:27017/filebump-files
     volumes:

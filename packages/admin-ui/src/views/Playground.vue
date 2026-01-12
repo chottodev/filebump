@@ -88,7 +88,7 @@ onMounted(() => {
     apiUrl.value = savedApiUrl;
   } else {
     // Пробуем взять из env переменных
-    const envUrl = import.meta.env.VITE_CLIENT_API_URL;
+    const envUrl = import.meta.env.VITE_FILE_API_URL;
     if (envUrl) {
       apiUrl.value = envUrl;
     }
@@ -98,7 +98,7 @@ onMounted(() => {
     apiKey.value = savedApiKey;
   } else {
     // Пробуем взять из env переменных
-    const envKey = import.meta.env.VITE_CLIENT_API_KEY;
+    const envKey = import.meta.env.VITE_FILE_API_KEY;
     if (envKey) {
       apiKey.value = envKey;
     }

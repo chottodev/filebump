@@ -105,14 +105,14 @@ const showModal = ref(false);
 const currentMetadata = ref(null);
 const metadataError = ref(null);
 
-// URL client-api для скачивания файлов
-const clientApiUrl = import.meta.env.VITE_CLIENT_API_URL || 'http://localhost:3007';
-const clientApiKey = import.meta.env.VITE_CLIENT_API_KEY || 'testKey1';
+// URL file-api для скачивания файлов
+const fileApiUrl = import.meta.env.VITE_FILE_API_URL || 'http://localhost:3007';
+const fileApiKey = import.meta.env.VITE_FILE_API_KEY || 'testKey1';
 
 // Инициализируем FilebumpClient для работы с метаданными
 const filebumpClient = new FilebumpClient({
-  url: clientApiUrl,
-  key: clientApiKey,
+  url: fileApiUrl,
+  key: fileApiKey,
 });
 
 const loadFiles = async () => {
@@ -137,10 +137,10 @@ const downloadFile = async (file) => {
   downloading.value = file.fileId;
   
   try {
-    // Скачиваем файл через client-api
-    const response = await axios.get(`${clientApiUrl}/file/${file.fileId}`, {
+    // Скачиваем файл через file-api
+    const response = await axios.get(`${fileApiUrl}/file/${file.fileId}`, {
       headers: {
-        'X-API-Key': clientApiKey,
+        'X-API-Key': fileApiKey,
       },
       responseType: 'blob', // Важно для скачивания файла
     });
