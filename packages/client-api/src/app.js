@@ -10,6 +10,7 @@ function createApp({
   FileApiLog,
   File,
   Meta,
+  Bucket,
 }) {
   const app = express();
 
@@ -20,7 +21,13 @@ function createApp({
   // };
   app.use(express.json());
   app.use(cors());
-  app.use(fileUpload());
+  app.use(fileUpload({
+    // Правильная обработка имен файлов с кириллицей
+    useTempFiles: false,
+    parseNested: true,
+    defCharset: 'utf8',
+    defParamCharset: 'utf8', // Важно: устанавливает UTF-8 для параметров заголовков (имя файла)
+  }));
   // app.use(
   //     checkAuthHeader({
   //       authFn,
@@ -44,6 +51,7 @@ function createApp({
       FileApiLog,
       File,
       Meta,
+      Bucket,
     },
     securityHandlers: {
       token: async function(req, scopes, definition) {

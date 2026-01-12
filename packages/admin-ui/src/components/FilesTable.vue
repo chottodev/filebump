@@ -6,6 +6,7 @@
           <th>File ID</th>
           <th>Filename</th>
           <th>Mimetype</th>
+          <th>Bucket ID</th>
           <th>Date Created</th>
           <th>Actions</th>
         </tr>
@@ -15,7 +16,8 @@
           <td>{{ file.fileId }}</td>
           <td>{{ file.filename || 'N/A' }}</td>
           <td>{{ file.mimetype || 'N/A' }}</td>
-          <td>{{ file.dateCreated || 'N/A' }}</td>
+          <td>{{ file.bucketId || 'default' }}</td>
+          <td>{{ file.createdAt || 'N/A' }}</td>
           <td>
             <div class="action-buttons">
               <button 
@@ -63,9 +65,13 @@
               <strong>MIME Type:</strong>
               <span>{{ currentMetadata.mimetype }}</span>
             </div>
-            <div v-if="currentMetadata.dateCreated" class="metadata-item">
+            <div v-if="currentMetadata.createdAt" class="metadata-item">
               <strong>Date Created:</strong>
-              <span>{{ currentMetadata.dateCreated }}</span>
+              <span>{{ currentMetadata.createdAt }}</span>
+            </div>
+            <div v-if="currentMetadata.bucketId" class="metadata-item">
+              <strong>Bucket ID:</strong>
+              <span>{{ currentMetadata.bucketId }}</span>
             </div>
             <div v-if="currentMetadata.meta && Object.keys(currentMetadata.meta).length > 0" class="metadata-section">
               <h4>Metadata:</h4>

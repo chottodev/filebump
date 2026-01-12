@@ -5,7 +5,7 @@ export interface FileMetadata {
   name?: string;
   mimetype?: string;
   size?: number;
-  dateCreated?: string;
+  createdAt?: string;
 }
 
 export interface ApiResponse<T = any> {

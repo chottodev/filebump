@@ -14,6 +14,12 @@
       >
         Meta
       </button>
+      <button 
+        @click="activeTab = 'buckets'" 
+        :class="{ active: activeTab === 'buckets' }"
+      >
+        Buckets
+      </button>
     </div>
     
     <div v-if="activeTab === 'files'" class="tab-content">
@@ -23,6 +29,10 @@
     <div v-if="activeTab === 'meta'" class="tab-content">
       <MetaTable />
     </div>
+    
+    <div v-if="activeTab === 'buckets'" class="tab-content">
+      <BucketsTable />
+    </div>
   </div>
 </template>
 
@@ -30,6 +40,7 @@
 import { ref } from 'vue';
 import FilesTable from '../components/FilesTable.vue';
 import MetaTable from '../components/MetaTable.vue';
+import BucketsTable from '../components/BucketsTable.vue';
 
 const activeTab = ref('files');
 </script>

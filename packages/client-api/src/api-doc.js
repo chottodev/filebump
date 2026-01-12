@@ -62,7 +62,7 @@ module.exports = {
         mimetype: {
           type: 'string',
         },
-        dateCreated: {
+        createdAt: {
           type: 'string',
         },
         meta: {

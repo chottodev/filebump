@@ -21,7 +21,7 @@ const getMetadata = async (Meta, fileId) => {
   }
 };
 
-module.exports = (FileApiLog, Meta) => {
+module.exports = (FileApiLog, Meta, File) => {
   async function get(req, res) {
     requestCounter++;
     const log = (...args) => {
@@ -32,9 +32,24 @@ module.exports = (FileApiLog, Meta) => {
       let isRequiredMp3 = false;
       const {fileId, fileName} = req.params;
       log('>>> get file', JSON.stringify({fileId, fileName}));
-      const subDirId = fileId.substring(0, 4);
-      const subDirPath = path.join(config.uploadDir, subDirId);
-      let uploadPathFile = path.join(subDirPath, fileId);
+      
+      // Получаем информацию о файле из БД
+      const fileRecord = await File.findOne({ fileId });
+      if (!fileRecord) {
+        await FileApiLog.create({
+          date: moment().format('YYYY-MM-DD HH:mm:ss'),
+          fileId,
+          endpoint: baseUrl,
+          result: RESULT.FAIL,
+          subresult: 'File not found in database',
+        });
+        res.status(404).json({status: 'NOT FOUND'});
+        log('file not found in database', fileId);
+        return;
+      }
+      
+      // Используем новый путь: {uploadDir}/{filepath}{extension}
+      let uploadPathFile = path.join(config.uploadDir, fileRecord.filepath + (fileRecord.extension || ''));
       if (fileName && path.extname(fileName) === '.mp3') {
         uploadPathFile = uploadPathFile + '.mp3';
         log('required mp3 file', uploadPathFile);
@@ -62,6 +77,10 @@ module.exports = (FileApiLog, Meta) => {
       let contentType = 'application/octet-stream'; // значение по умолчанию
       if (isRequiredMp3) {
         contentType = 'audio/mpeg';
+      } else if (fileRecord.mimetype) {
+        contentType = fileRecord.mimetype;
+      } else if (fileRecord.mimetype) {
+        contentType = fileRecord.mimetype;
       } else if (metadata.mimetype) {
         contentType = metadata.mimetype;
       } else {

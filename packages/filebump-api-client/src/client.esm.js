@@ -9,6 +9,8 @@ class FilebumpClient {
 
   async upload(file, fileId = null, metadata = {}) {
     const formData = new FormData();
+    // FormData автоматически использует UTF-8 для имен файлов
+    // На сервере express-fileupload должен быть настроен с defParamCharset: 'utf8'
     formData.append('file', file);
 
     // Добавляем метаданные в formData

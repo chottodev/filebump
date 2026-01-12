@@ -64,7 +64,8 @@ module.exports = (FileApiLog, File, Meta) => {
         fileId: file.fileId,
         filename: file.filename,
         mimetype: file.mimetype,
-        dateCreated: file.dateCreated,
+        createdAt: file.createdAt,
+        bucketId: file.bucketId,
         meta,
       });
     } catch (err) {

@@ -10,10 +10,47 @@ const {constants: RESULT} = require('@filebump/utils');
 
 const {MimeType} = require('mime-type');
 const db = require('mime-db');
+const mimeTypes = require('mime-types');
 
 const {getId} = require('../getId.js');
 
 const authHeader = config.authHeader || 'X-API-Key';
+
+/**
+ * Исправляет кодировку имени файла
+ * Проблема: имена файлов с кириллицей могут приходить в неправильной кодировке
+ * Решение: декодируем из latin1 в utf8, если имя файла содержит невалидные UTF-8 символы
+ */
+const fixFilenameEncoding = (filename) => {
+  if (!filename || typeof filename !== 'string') {
+    return filename;
+  }
+  
+  try {
+    // Проверяем, является ли строка валидным UTF-8
+    const isValidUtf8 = Buffer.from(filename, 'utf8').toString('utf8') === filename;
+    if (isValidUtf8) {
+      return filename;
+    }
+    
+    // Пытаемся декодировать из latin1 (ISO-8859-1) в UTF-8
+    // Это часто помогает, когда кириллица была неправильно интерпретирована
+    const decoded = Buffer.from(filename, 'latin1').toString('utf8');
+    
+    // Проверяем, что декодирование дало валидный результат
+    // (не содержит replacement characters)
+    if (decoded && !decoded.includes('\uFFFD')) {
+      return decoded;
+    }
+    
+    // Если декодирование не помогло, возвращаем оригинал
+    return filename;
+  } catch (err) {
+    // Если ошибка декодирования, используем оригинальное имя
+    console.error('filename decode error:', err);
+    return filename;
+  }
+};
 
 let requestCounter = 0;
 let requestFailCounter = 0;
@@ -49,31 +86,28 @@ const saveMetadata = async (Meta, fileId, metadata) => {
   await Promise.all(promises);
 };
 
-const postUploadAction = async (metadata) => {
-  if (metadata.mimetype !== 'audio/ogg' && metadata.mimetype !== 'audio/mpeg') {
+const postUploadAction = async (fileRecord) => {
+  if (fileRecord.mimetype !== 'audio/ogg' && fileRecord.mimetype !== 'audio/mpeg') {
     return console.log(
-        `${metadata.mimetype}: post actions for uploaded mimetype is not defined`,
+        `${fileRecord.mimetype}: post actions for uploaded mimetype is not defined`,
     );
   }
 
-  if (metadata.mimetype === 'audio/ogg' || metadata.mimetype === 'audio/mpeg') {
-    console.log(`${metadata.mimetype}: start post upload action`);
-    const fileId = metadata.fileId;
-
-    const subDirId = fileId.substring(0, 4);
-
-    const subDirPath = path.join(config.uploadDir, subDirId);
-    await fs.mkdir(subDirPath, {recursive: true});
-
-    const uploadPathFile = path.join(subDirPath, fileId);
+  if (fileRecord.mimetype === 'audio/ogg' || fileRecord.mimetype === 'audio/mpeg') {
+    console.log(`${fileRecord.mimetype}: start post upload action`);
+    
+    // Используем новый путь: {uploadDir}/{filepath}{extension}
+    const uploadPathFile = path.join(config.uploadDir, fileRecord.filepath + (fileRecord.extension || ''));
+    const mp3PathFile = uploadPathFile + '.mp3';
+    
     const {stdout, stderr} = await exec(
-        `ffmpeg -i ${uploadPathFile} ${uploadPathFile}.mp3`,
+        `ffmpeg -i ${uploadPathFile} ${mp3PathFile}`,
     );
     console.log(stdout, stderr);
   }
 };
 
-module.exports = (FileApiLog, File, Meta) => {
+module.exports = (FileApiLog, File, Meta, Bucket) => {
   async function post(req, res) {
     console.log('post /download');
     const startTime = performance.now();
@@ -118,24 +152,40 @@ module.exports = (FileApiLog, File, Meta) => {
       const date = new Date();
       
       // Извлекаем имя файла из заголовка, если есть
-      const filename = targetHeader ? targetHeader.match(filenameReg)?.[1] : null;
+      let filename = targetHeader ? targetHeader.match(filenameReg)?.[1] : null;
+      // Исправляем кодировку имени файла (если пришло в неправильной кодировке)
+      if (filename) {
+        filename = fixFilenameEncoding(filename);
+        log('original filename from header:', targetHeader.match(filenameReg)?.[1], 'fixed filename:', filename);
+      }
       const mimetype = (mimeType) ? mimeType : response.headers['content-type'];
       
+      // В метаданные сохраняем только пользовательские поля
+      // fileId, mimetype, createdAt - сохраняются в модели File
+      // key - служебное поле, не сохраняем в метаданные
       const metadata = {
-        fileId,
-        downloadUrl,
-        mimetype,
-        size: response.headers['content-length'],
-        dateCreated: (+date / 1000).toFixed(0),
-        key,
+        downloadUrl, // URL источника может быть полезен
+        // size можно оставить, если нужно, но обычно не требуется
       };
-      log({metadata});
+      log('metadata to save:', JSON.stringify(metadata));
 
-      const subDirId = fileId.substring(0, 4);
-      const subDirPath = path.join(config.uploadDir, subDirId);
-      await fs.mkdir(subDirPath, {recursive: true});
-
-      const uploadPathFile = path.join(subDirPath, fileId);
+      // Извлекаем bucketId из req.body или используем 'default'
+      const bucketId = req.body.bucketId || 'default';
+      
+      // Получаем дату в формате YYYY-MM-DD
+      const dateDir = moment().format('YYYY-MM-DD');
+      
+      // Получаем расширение файла
+      const extension = filename ? path.extname(filename).toLowerCase() : (mimetype ? '.' + mimeTypes.extension(mimetype) : '');
+      
+      // Формируем путь: {bucketId}/{YYYY-MM-DD}/{fileId}.{extension}
+      const filepath = `${bucketId}/${dateDir}/${fileId}`;
+      const fullFilePath = path.join(config.uploadDir, filepath);
+      const uploadPathFile = fullFilePath + (extension || '');
+      
+      // Создаем директории если их нет
+      const uploadDir = path.dirname(uploadPathFile);
+      await fs.mkdir(uploadDir, {recursive: true});
 
       await fs.writeFile(uploadPathFile, response.data, {encoding: 'binary'});
       // Сохраняем метаданные в БД вместо JSON файла
@@ -146,18 +196,31 @@ module.exports = (FileApiLog, File, Meta) => {
         fileId,
         filename: filename || null,
         mimetype: mimetype || null,
-        dateCreated: moment().format('YYYY-MM-DD HH:mm:ss'),
+        createdAt: moment().format('YYYY-MM-DD HH:mm:ss'),
+        bucketId: bucketId,
+        filepath: filepath, // {bucketId}/{YYYY-MM-DD}/{fileId}
+        extension: extension || '',
       });
+      
+      // Создаем или обновляем Bucket
+      await Bucket.findOneAndUpdate(
+        { bucketId },
+        { bucketId, createdAt: moment().format('YYYY-MM-DD HH:mm:ss') },
+        { upsert: true, new: true }
+      );
 
       await FileApiLog.create({
         date: moment().format('YYYY-MM-DD HH:mm:ss'),
-        fileId: metadata.fileId,
+        fileId: fileId,
         endpoint: req.originalUrl,
         result: RESULT.OK,
         subresult: '',
       });
       log('file download success', fileId);
-      await postUploadAction(metadata);
+      
+      // Получаем созданную запись File для postUploadAction
+      const fileRecord = await File.findOne({ fileId });
+      await postUploadAction(fileRecord);
     } catch (err) {
       requestFailCounter++;
       await FileApiLog.create({

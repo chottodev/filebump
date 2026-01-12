@@ -42,7 +42,8 @@
         <p><strong>File ID:</strong> {{ fileInfo.fileId || 'N/A' }}</p>
         <p><strong>Filename:</strong> {{ fileInfo.filename || 'N/A' }}</p>
         <p><strong>MIME Type:</strong> {{ fileInfo.mimetype || 'N/A' }}</p>
-        <p><strong>Date Created:</strong> {{ fileInfo.dateCreated || 'N/A' }}</p>
+        <p><strong>Date Created:</strong> {{ fileInfo.createdAt || 'N/A' }}</p>
+        <p v-if="fileInfo.bucketId"><strong>Bucket ID:</strong> {{ fileInfo.bucketId }}</p>
         <div v-if="fileInfo.meta && Object.keys(fileInfo.meta).length > 0" class="metadata-section">
           <h4>Metadata:</h4>
           <div v-for="(value, key) in fileInfo.meta" :key="key" class="metadata-item">

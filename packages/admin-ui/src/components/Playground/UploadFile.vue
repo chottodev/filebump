@@ -15,6 +15,17 @@
       </div>
       
       <div class="form-group">
+        <label for="bucket-id">Bucket ID (optional):</label>
+        <input 
+          id="bucket-id"
+          type="text" 
+          v-model="bucketId" 
+          placeholder="Leave empty to use 'default'"
+          class="form-control"
+        />
+      </div>
+      
+      <div class="form-group">
         <div class="metadata-header">
           <label>Metadata (optional):</label>
           <button 
@@ -113,6 +124,7 @@ const apiUrl = inject('apiUrl');
 const apiKey = inject('apiKey');
 
 const fileId = ref('');
+const bucketId = ref('');
 const selectedFile = ref(null);
 const uploading = ref(false);
 const result = ref(null);
@@ -165,6 +177,12 @@ const uploadFile = async () => {
         metadata[key] = value;
       }
     });
+    
+    // Добавляем bucketId в метаданные, если указан
+    const uploadBucketId = bucketId.value.trim();
+    if (uploadBucketId) {
+      metadata.bucketId = uploadBucketId;
+    }
     
     const response = await client.upload(selectedFile.value, uploadFileId, metadata);
 

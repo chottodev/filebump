@@ -1,6 +1,6 @@
 const express = require('express');
 const moment = require('moment');
-const {FileApiLog, File, CronTaskLog, Meta} = require('@filebump/models');
+const {FileApiLog, File, CronTaskLog, Meta, Bucket} = require('@filebump/models');
 const journalsRouter = express.Router();
 
 function findColumnFilter(columns, columnName) {
@@ -28,7 +28,7 @@ journalsRouter.get('/files', async (req, res) => {
   }
   try {
     const rows = await File.find(query, null, {
-      sort: '-dateCreated',
+      sort: '-createdAt',
       limit: parseInt(req.query.length || 10),
       skip: parseInt(req.query.start || 0),
     });
@@ -175,8 +175,29 @@ journalsRouter.get('/files/:fileId/fileinfo', async (req, res) => {
       fileId: file.fileId,
       filename: file.filename,
       mimetype: file.mimetype,
-      dateCreated: file.dateCreated,
+      createdAt: file.createdAt,
+      bucketId: file.bucketId,
       meta,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({error: err.message});
+  }
+});
+
+journalsRouter.get('/buckets', async (req, res) => {
+  console.log('get /api/journals/buckets');
+  
+  try {
+    const buckets = await Bucket.find({}, null, {
+      sort: '-createdAt',
+    });
+    
+    res.json({
+      draw: parseInt(req.query.draw || 1),
+      recordsTotal: buckets.length,
+      recordsFiltered: buckets.length,
+      data: buckets,
     });
   } catch (err) {
     console.log(err);

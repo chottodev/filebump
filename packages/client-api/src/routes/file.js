@@ -1,6 +1,6 @@
 const fileName = require('./fileHandler.js');
 
-module.exports = (FileApiLog, Meta) => {
+module.exports = (FileApiLog, Meta, File) => {
   return {
     parameters: [
       {
@@ -11,6 +11,6 @@ module.exports = (FileApiLog, Meta) => {
         description: 'ID of the file to retrieve',
       },
     ],
-    get: fileName(FileApiLog, Meta).get,
+    get: fileName(FileApiLog, Meta, File).get,
   };
 };

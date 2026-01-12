@@ -5,17 +5,80 @@ const exec = util.promisify(require('child_process').exec);
 const moment = require('moment');
 const {constants: RESULT} = require('@filebump/utils');
 const config = require('../config');
+const mime = require('mime-types');
 
 const {getId} = require('../getId');
 
-const prepareMetadata = (uploadedFile) => {
-  return {
-    name: uploadedFile.name,
-    mimetype: uploadedFile.mimetype,
-    md5: uploadedFile.md5,
-    size: uploadedFile.size,
-    dateCreated: (+new Date() / 1000).toFixed(0),
-  };
+/**
+ * Получает расширение файла из имени файла или mimetype
+ */
+const getFileExtension = (filename, mimetype) => {
+  // Сначала пытаемся получить из имени файла
+  if (filename) {
+    const ext = path.extname(filename).toLowerCase();
+    if (ext) {
+      return ext;
+    }
+  }
+  
+  // Если нет расширения в имени, пытаемся получить из mimetype
+  if (mimetype) {
+    const ext = mime.extension(mimetype);
+    if (ext) {
+      return '.' + ext;
+    }
+  }
+  
+  // Если ничего не найдено, возвращаем пустую строку
+  return '';
+};
+
+/**
+ * Исправляет кодировку имени файла
+ * Проблема: express-fileupload может неправильно обрабатывать имена файлов с кириллицей
+ * Решение: пытаемся декодировать из разных кодировок в UTF-8
+ */
+const fixFilenameEncoding = (filename) => {
+  if (!filename || typeof filename !== 'string') {
+    return filename;
+  }
+  
+  try {
+    // Проверяем, содержит ли строка символы, которые выглядят как неправильно закодированная кириллица
+    // Паттерн: последовательности типа "Ð" или "Ð¾" - это признаки неправильной кодировки
+    const hasEncodingIssue = /Ð|Ñ|Ð|Ñ/.test(filename);
+    
+    if (!hasEncodingIssue) {
+      // Если нет признаков проблемы с кодировкой, проверяем валидность UTF-8
+      try {
+        Buffer.from(filename, 'utf8');
+        return filename; // Валидный UTF-8
+      } catch (e) {
+        // Невалидный UTF-8, попробуем декодировать
+      }
+    }
+    
+    // Пытаемся декодировать из latin1 (ISO-8859-1) в UTF-8
+    // Это часто помогает, когда кириллица была неправильно интерпретирована как latin1
+    const decoded = Buffer.from(filename, 'latin1').toString('utf8');
+    
+    // Проверяем, что декодирование дало валидный результат
+    // (не содержит replacement characters и выглядит как правильная кириллица)
+    if (decoded && !decoded.includes('\uFFFD')) {
+      // Проверяем, что результат содержит кириллические символы (если исходная строка их содержала)
+      const hasCyrillic = /[А-Яа-яЁё]/.test(decoded);
+      if (hasCyrillic || !hasEncodingIssue) {
+        return decoded;
+      }
+    }
+    
+    // Если декодирование не помогло, возвращаем оригинал
+    return filename;
+  } catch (err) {
+    // Если ошибка декодирования, используем оригинальное имя
+    console.error('filename decode error:', err);
+    return filename;
+  }
 };
 
 /**
@@ -70,7 +133,7 @@ const sanitizeMetadataValue = (value) => {
  */
 const extractCustomMetadata = (body) => {
   const customMetadata = {};
-  const excludedKeys = ['file', 'fileId']; // Служебные поля, которые не должны быть метаданными
+  const excludedKeys = ['file', 'fileId', 'bucketId']; // Служебные поля, которые не должны быть метаданными
   
   if (!body || typeof body !== 'object') {
     return customMetadata;
@@ -94,29 +157,26 @@ const extractCustomMetadata = (body) => {
   return customMetadata;
 };
 
-const postUploadAction = async (metadata) => {
-  if (metadata.mimetype !== 'audio/ogg' &&
-    metadata.mimetype !== 'audio/mpeg' &&
-    metadata.mimetype !== 'audio/wave') {
+const postUploadAction = async (fileRecord) => {
+  if (fileRecord.mimetype !== 'audio/ogg' &&
+    fileRecord.mimetype !== 'audio/mpeg' &&
+    fileRecord.mimetype !== 'audio/wave') {
     return console.log(
-        `${metadata.mimetype}: post actions for uploaded mimetype is not defined`,
+        `${fileRecord.mimetype}: post actions for uploaded mimetype is not defined`,
     );
   }
 
-  if (metadata.mimetype === 'audio/ogg' ||
-    metadata.mimetype === 'audio/mpeg'||
-    metadata.mimetype === 'audio/wave') {
-    console.log(`${metadata.mimetype}: start post upload action`);
-    const fileId = metadata.fileId;
-
-    const subDirId = fileId.substring(0, 4);
-
-    const subDirPath = path.join(config.uploadDir, subDirId);
-    await fs.mkdir(subDirPath, {recursive: true});
-
-    const uploadPathFile = path.join(subDirPath, fileId);
+  if (fileRecord.mimetype === 'audio/ogg' ||
+    fileRecord.mimetype === 'audio/mpeg'||
+    fileRecord.mimetype === 'audio/wave') {
+    console.log(`${fileRecord.mimetype}: start post upload action`);
+    
+    // Используем новый путь: {uploadDir}/{filepath}{extension}
+    const uploadPathFile = path.join(config.uploadDir, fileRecord.filepath + (fileRecord.extension || ''));
+    const mp3PathFile = uploadPathFile + '.mp3';
+    
     const {stdout, stderr} = await exec(
-        `ffmpeg -i ${uploadPathFile} ${uploadPathFile}.mp3`,
+        `ffmpeg -i ${uploadPathFile} ${mp3PathFile}`,
     );
     console.log(stdout, stderr);
   }
@@ -135,7 +195,7 @@ const saveMetadata = async (Meta, fileId, metadata) => {
   await Promise.all(promises);
 };
 
-module.exports = (FileApiLog, File, Meta) => {
+module.exports = (FileApiLog, File, Meta, Bucket) => {
   let requestCounter = 0;
   async function post(req, res) {
     requestCounter++;
@@ -163,25 +223,37 @@ module.exports = (FileApiLog, File, Meta) => {
     const fileId = req.query.fileId ? req.query.fileId : getId();
     const uploadedFile = req.files.file;
 
-    const subDirId = fileId.substring(0, 4);
-
-    const subDirPath = path.join(config.uploadDir, subDirId);
+    // Извлекаем bucketId из req.body или используем 'default'
+    const bucketId = req.body.bucketId || 'default';
+    
+    // Получаем дату в формате YYYY-MM-DD
+    const dateDir = moment().format('YYYY-MM-DD');
+    
+    // Получаем расширение файла
+    const filename = fixFilenameEncoding(uploadedFile.name);
+    const extension = getFileExtension(filename, uploadedFile.mimetype);
+    
+    // Формируем путь: {bucketId}/{YYYY-MM-DD}/{fileId}.{extension}
+    const filepath = `${bucketId}/${dateDir}/${fileId}`;
+    const fullFilePath = path.join(config.uploadDir, filepath);
+    const uploadPathFile = fullFilePath + extension;
+    
+    // Создаем директории если их нет
+    const uploadDir = path.dirname(uploadPathFile);
     try {
-      await fs.mkdir(subDirPath, {recursive: true});
-
-      const uploadPathFile = path.join(subDirPath, fileId);
+      await fs.mkdir(uploadDir, {recursive: true});
 
       // Извлекаем и санитизируем дополнительные метаданные из req.body
+      // Исключаем служебные поля: fileId, key, bucketId (они сохраняются в File/Bucket)
       const customMetadata = extractCustomMetadata(req.body);
       log('custom metadata from request:', JSON.stringify(customMetadata));
 
+      // В метаданные сохраняем только пользовательские поля
+      // fileId, key, name, mimetype, createdAt - сохраняются в модели File
       const metadata = {
-        ...prepareMetadata(uploadedFile),
-        fileId,
-        key,
-        ...customMetadata, // Добавляем пользовательские метаданные
+        ...customMetadata, // Только пользовательские метаданные
       };
-      log('metadata', JSON.stringify(metadata));
+      log('metadata to save:', JSON.stringify(metadata));
 
       await uploadedFile.mv(uploadPathFile);
       // Сохраняем метаданные в БД вместо JSON файла
@@ -193,12 +265,25 @@ module.exports = (FileApiLog, File, Meta) => {
         url: `${config.baseUrl}/file/${fileId}`,
         status: RESULT.OK,
       };
+      
+      log('original filename:', uploadedFile.name, 'fixed filename:', filename, 'extension:', extension);
+      
       await File.create({
         fileId: resData.fileId,
-        filename: uploadedFile.name,
+        filename: filename,
         mimetype: uploadedFile.mimetype,
-        dateCreated: moment().format('YYYY-MM-DD HH:mm:ss'),
+        createdAt: moment().format('YYYY-MM-DD HH:mm:ss'),
+        bucketId: bucketId,
+        filepath: filepath, // {bucketId}/{YYYY-MM-DD}/{fileId}
+        extension: extension,
       });
+      
+      // Создаем или обновляем Bucket
+      await Bucket.findOneAndUpdate(
+        { bucketId },
+        { bucketId, createdAt: moment().format('YYYY-MM-DD HH:mm:ss') },
+        { upsert: true, new: true }
+      );
 
       await FileApiLog.create({
         date: moment().format('YYYY-MM-DD HH:mm:ss'),
@@ -210,7 +295,10 @@ module.exports = (FileApiLog, File, Meta) => {
 
       log('<<< response', resData);
       res.json(resData);
-      await postUploadAction(metadata);
+      
+      // Получаем созданную запись File для postUploadAction
+      const fileRecord = await File.findOne({ fileId: resData.fileId });
+      await postUploadAction(fileRecord);
     } catch (err) {
       log(err);
       await FileApiLog.create({
