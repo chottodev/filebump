@@ -57,18 +57,6 @@ class FilebumpClient {
     return await axios.post(endpoint, body, config);
   }
 
-  async download(fileId) {
-    const config = {
-      headers: {
-        'X-API-Key': this.key,
-      },
-      responseType: 'blob',
-    };
-
-    const url = `${this.url}/file/${fileId}`;
-    return await axios.get(url, config);
-  }
-
   async file(fileId) {
     const config = {
       headers: {

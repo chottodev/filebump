@@ -27,6 +27,14 @@ app.get('/health', (req, res) => {
   res.json({status: 'ok'});
 });
 
+// Config endpoint for UI
+app.get('/api/config', (req, res) => {
+  res.json({
+    fileApiUrl: config.fileApiUrl,
+    fileApiKey: config.fileApiKey,
+  });
+});
+
 // API routes
 app.use('/api/journals', require('./routes/journals'));
 app.use('/api/charts', require('./routes/charts'));

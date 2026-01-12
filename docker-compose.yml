@@ -37,7 +37,7 @@ services:
       NODE_ENV: production
       PORT: 3007
       FILE_API_PORT: 3007
-      FILE_API_BASE_URL: http://localhost:3007
+      FILE_API_URL: http://localhost:3007
       FILE_STORAGE_DIR: /tmp/uploads
       FILE_API_KEYS: ${FILE_API_KEYS:-testKey1,testKey2}
       MONGODB_LOGS: mongodb://mongodb:27017/filebumb-logs
@@ -73,6 +73,7 @@ services:
       PORT: 33033
       ADMIN_BACKEND_PORT: 33033
       SESSION_SECRET: ${SESSION_SECRET:-filebump-admin-secret}
+      FILE_API_URL: http://file-api:3007
       MONGODB_LOGS: mongodb://mongodb:27017/filebumb-logs
       MONGODB_DATA: mongodb://mongodb:27017/filebump-files
     depends_on:

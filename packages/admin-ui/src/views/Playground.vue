@@ -11,7 +11,7 @@
             id="api-url"
             type="text" 
             v-model="apiUrl" 
-            :placeholder="defaultApiUrl"
+            placeholder="http://localhost:3007"
             class="form-control"
             @input="saveConfig"
           />
@@ -71,34 +71,35 @@ import { ref, provide, onMounted } from 'vue';
 import UploadFile from '../components/Playground/UploadFile.vue';
 import UploadByUrl from '../components/Playground/UploadByUrl.vue';
 import Download from '../components/Playground/Download.vue';
+import { getConfig } from '../services/config';
 
 const STORAGE_KEY_API_URL = 'filebump-playground-api-url';
 const STORAGE_KEY_API_KEY = 'filebump-playground-api-key';
 
 const activeTab = ref('upload-file');
-// Значение по умолчанию из переменной окружения
-const defaultApiUrl = import.meta.env.VITE_FILE_API_URL || 'http://localhost:3007';
-const defaultApiKey = import.meta.env.VITE_FILE_API_KEY || 'testKey1';
-const apiUrl = ref(defaultApiUrl);
-const apiKey = ref(defaultApiKey);
+const apiUrl = ref('');
+const apiKey = ref('testKey1');
 
-// Загрузка из localStorage при монтировании
-onMounted(() => {
+// Загрузка из localStorage и конфигурации при монтировании
+onMounted(async () => {
+  // Сначала загружаем конфигурацию с бэкенда
+  const config = await getConfig();
+  
   const savedApiUrl = localStorage.getItem(STORAGE_KEY_API_URL);
   const savedApiKey = localStorage.getItem(STORAGE_KEY_API_KEY);
   
   if (savedApiUrl) {
     apiUrl.value = savedApiUrl;
   } else {
-    // Используем значение по умолчанию (уже установлено выше)
-    apiUrl.value = defaultApiUrl;
+    // Используем URL из конфигурации бэкенда
+    apiUrl.value = config.fileApiUrl;
   }
   
   if (savedApiKey) {
     apiKey.value = savedApiKey;
   } else {
-    // Используем значение по умолчанию (уже установлено выше)
-    apiKey.value = defaultApiKey;
+    // Используем ключ из конфигурации бэкенда
+    apiKey.value = config.fileApiKey;
   }
 });
 

@@ -102,9 +102,9 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import api from '../services/api';
-import axios from 'axios';
 import { FilebumpClient } from '@filebump/filebump-api-client';
 import Pagination from './Pagination.vue';
+import { getConfig } from '../services/config';
 
 const files = ref([]);
 const downloading = ref(null);
@@ -118,15 +118,21 @@ const currentPage = ref(1);
 const pageSize = ref(10);
 const totalRecords = ref(0);
 
-// URL file-api для скачивания файлов
-const fileApiUrl = import.meta.env.VITE_FILE_API_URL || 'http://localhost:3007';
-const fileApiKey = import.meta.env.VITE_FILE_API_KEY || 'testKey1';
+// URL file-api для скачивания файлов - загружается с бэкенда
+const fileApiUrl = ref('');
+const fileApiKey = ref('testKey1');
+const filebumpClient = ref(null);
 
-// Инициализируем FilebumpClient для работы с метаданными
-const filebumpClient = new FilebumpClient({
-  url: fileApiUrl,
-  key: fileApiKey,
-});
+// Инициализируем конфигурацию и FilebumpClient
+const initializeConfig = async () => {
+  const config = await getConfig();
+  fileApiUrl.value = config.fileApiUrl;
+  fileApiKey.value = config.fileApiKey;
+  filebumpClient.value = new FilebumpClient({
+    url: config.fileApiUrl,
+    key: config.fileApiKey,
+  });
+};
 
 const loadFiles = async () => {
   try {
@@ -157,13 +163,13 @@ const downloadFile = async (file) => {
   downloading.value = file.fileId;
   
   try {
-    // Скачиваем файл через file-api
-    const response = await axios.get(`${fileApiUrl}/file/${file.fileId}`, {
-      headers: {
-        'X-API-Key': fileApiKey,
-      },
-      responseType: 'blob', // Важно для скачивания файла
-    });
+    // Проверяем, что filebumpClient инициализирован
+    if (!filebumpClient.value) {
+      await initializeConfig();
+    }
+    
+    // Скачиваем файл через FilebumpClient
+    const response = await filebumpClient.value.downloadFile(file.fileId);
     
     // Создаем blob URL и скачиваем файл
     const blob = new Blob([response.data], { type: file.mimetype || 'application/octet-stream' });
@@ -220,7 +226,10 @@ const showMetadata = async (file) => {
   metadataError.value = null;
   
   try {
-    const response = await filebumpClient.getFileInfo(file.fileId);
+    if (!filebumpClient.value) {
+      await initializeConfig();
+    }
+    const response = await filebumpClient.value.getFileInfo(file.fileId);
     currentMetadata.value = response.data;
   } catch (error) {
     console.error('Error loading metadata:', error);
@@ -244,7 +253,8 @@ const formatKey = (key) => {
     .trim();
 };
 
-onMounted(() => {
+onMounted(async () => {
+  await initializeConfig();
   loadFiles();
 });
 </script>

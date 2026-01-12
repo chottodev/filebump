@@ -33,9 +33,9 @@ console.log(result.data);
 // Upload with specific file ID
 const resultWithId = await client.upload(fileData, 'filename.txt', 'custom-file-id');
 
-// Download a file from URL
-const downloadResult = await client.download('https://example.com/file.pdf');
-console.log(downloadResult.data);
+// Upload a file from URL
+const uploadResult = await client.uploadByUrl('https://example.com/file.pdf');
+console.log(uploadResult.data);
 
 // Get file by ID
 const file = await client.file('file-id-123');
@@ -65,11 +65,13 @@ Upload a file to the API.
 
 Returns: Promise resolving to axios response
 
-#### `download(downloadUrl)`
+#### `uploadByUrl(sourceUrl, fileId, metadata)`
 
-Download a file from an external URL through the API.
+Upload a file from an external URL through the API.
 
-- `downloadUrl` (string): URL of the file to download
+- `sourceUrl` (string): URL of the file to download and upload
+- `fileId` (string, optional): Custom file ID (if not provided, server will generate one)
+- `metadata` (object, optional): Additional metadata key-value pairs
 
 Returns: Promise resolving to axios response
 

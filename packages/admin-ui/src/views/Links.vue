@@ -26,12 +26,17 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import { getConfig } from '../services/config';
 
-// File API URL - можно настроить через env переменные или конфиг
-const fileApiBaseUrl = import.meta.env.VITE_FILE_API_URL || 'http://localhost:3007';
-const swaggerUrl = computed(() => `${fileApiBaseUrl}/api-docs`);
-const fileApiUrl = computed(() => `${fileApiBaseUrl}/api`);
+const fileApiBaseUrl = ref('');
+const swaggerUrl = computed(() => fileApiBaseUrl.value ? `${fileApiBaseUrl.value}/api-docs` : '');
+const fileApiUrl = computed(() => fileApiBaseUrl.value ? `${fileApiBaseUrl.value}/api` : '');
+
+onMounted(async () => {
+  const config = await getConfig();
+  fileApiBaseUrl.value = config.fileApiUrl;
+});
 </script>
 
 <style scoped>

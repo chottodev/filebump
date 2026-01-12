@@ -141,7 +141,7 @@ const downloadFile = async () => {
       key: apiKey.value,
     });
 
-    const response = await client.download(fileId.value);
+    const response = await client.downloadFile(fileId.value);
 
     // Create download link
     const blob = new Blob([response.data]);
