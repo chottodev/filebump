@@ -64,7 +64,7 @@ curl \
 - **File API**: `FILE_API_PORT=3007`, `FILE_API_UPLOAD_DIR=/tmp/uploads`
 - **Admin Web**: `ADMIN_WEB_PORT=33033`
 - **Cron Jobs**: `CLEAR_FILES_TASK_SCHEDULE=0 0 1 * * *` (автоматическая очистка файлов)
-- **MongoDB**: `MONGODB_LOGS`, `MONGODB_SETTINGS`
+- **MongoDB**: `MONGODB_LOGS`, `MONGODB_DATA`
 
 ## Документация
 

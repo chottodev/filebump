@@ -6,7 +6,7 @@ module.exports = {
   
   // MongoDB
   logsMongodb: process.env.MONGODB_LOGS || 'mongodb://mongodb/filebumb-logs',
-  settingsMongodb: process.env.MONGODB_SETTINGS || 'mongodb://mongodb/filebump-files',
+  settingsMongodb: process.env.MONGODB_DATA || 'mongodb://mongodb/filebump-files',
   
   // Session
   sessionSecret: process.env.SESSION_SECRET || 'filebump-admin-secret',
