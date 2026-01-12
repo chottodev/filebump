@@ -12,6 +12,6 @@ module.exports = {
   sessionSecret: process.env.SESSION_SECRET || 'filebump-admin-secret',
   
   // File API URL for UI
-  fileApiUrl: process.env.FILE_API_URL || (process.env.NODE_ENV === 'production' ? 'http://file-api:3007' : 'http://localhost:3007'),
+  fileApiUrl: process.env.FILE_API_URL || 'http://localhost:3007',
   fileApiKey: process.env.FILE_API_KEYS ? process.env.FILE_API_KEYS.split(',')[0] : 'testKey1',
 };
