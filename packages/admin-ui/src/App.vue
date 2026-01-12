@@ -2,7 +2,10 @@
   <div id="app">
     <nav class="navbar navbar-inverse">
       <div class="container">
-        <a class="navbar-brand" href="/">Filebump Admin</a>
+        <a class="navbar-brand" href="/">
+          Filebump Admin
+          <span class="version">v{{ version }}</span>
+        </a>
         <ul class="nav navbar-nav">
           <li>
             <router-link to="/data" class="nav-link">Данные</router-link>
@@ -29,7 +32,7 @@
 </template>
 
 <script setup>
-// Vue 3 Composition API
+const version = __APP_VERSION__ || 'unknown';
 </script>
 
 <style>
@@ -51,6 +54,15 @@
   font-size: 1.5rem;
   text-decoration: none;
   margin-right: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar-brand .version {
+  font-size: 0.875rem;
+  color: #aaa;
+  font-weight: normal;
 }
 
 .navbar-nav {

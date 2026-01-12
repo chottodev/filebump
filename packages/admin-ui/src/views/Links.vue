@@ -4,12 +4,21 @@
     <p>Документация API и ссылки</p>
     <div class="links-content">
       <a 
+        :href="swaggerUrl" 
+        target="_blank"
+        class="link-card"
+      >
+        <h3>File API - Swagger UI</h3>
+        <p>Интерактивная документация API</p>
+        <p class="link-url">{{ swaggerUrl }}</p>
+      </a>
+      <a 
         :href="fileApiUrl" 
         target="_blank"
         class="link-card"
       >
-        <h3>File API Documentation</h3>
-        <p>OpenAPI UI для File API</p>
+        <h3>File API - OpenAPI Spec</h3>
+        <p>Спецификация OpenAPI (JSON)</p>
         <p class="link-url">{{ fileApiUrl }}</p>
       </a>
     </div>
@@ -21,6 +30,7 @@ import { computed } from 'vue';
 
 // File API URL - можно настроить через env переменные или конфиг
 const fileApiBaseUrl = import.meta.env.VITE_FILE_API_URL || 'http://localhost:3007';
+const swaggerUrl = computed(() => `${fileApiBaseUrl}/api-docs`);
 const fileApiUrl = computed(() => `${fileApiBaseUrl}/api`);
 </script>
 

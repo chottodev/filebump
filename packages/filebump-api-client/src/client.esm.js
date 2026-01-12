@@ -35,7 +35,7 @@ class FilebumpClient {
     return await axios.post(url, formData, config);
   }
 
-  async uploadByUrl(sourceUrl, fileId = null) {
+  async uploadByUrl(sourceUrl, fileId = null, metadata = {}) {
     const config = {
       headers: {
         'X-API-Key': this.key,
@@ -45,7 +45,16 @@ class FilebumpClient {
 
     const endpoint = `${this.url}/download`;
     
-    return await axios.post(endpoint, { url: sourceUrl }, config);
+    // Формируем тело запроса с url, fileId (если указан) и метаданными
+    const body = { url: sourceUrl };
+    if (fileId) {
+      body.fileId = fileId;
+    }
+    if (metadata && typeof metadata === 'object') {
+      Object.assign(body, metadata);
+    }
+    
+    return await axios.post(endpoint, body, config);
   }
 
   async download(fileId) {

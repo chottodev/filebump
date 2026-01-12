@@ -18,29 +18,49 @@
         </tr>
       </tbody>
     </table>
+
+    <Pagination
+      :current-page="currentPage"
+      :page-size="pageSize"
+      :total-records="totalRecords"
+      @page-change="handlePageChange"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import api from '../services/api';
+import Pagination from './Pagination.vue';
 
 const logs = ref([]);
 
+// Пагинация
+const currentPage = ref(1);
+const pageSize = ref(10);
+const totalRecords = ref(0);
+
 const loadLogs = async () => {
   try {
+    const start = (currentPage.value - 1) * pageSize.value;
     const response = await api.get('/journals/cron-task-log', {
       params: {
-        draw: 1,
-        start: 0,
-        length: 10,
+        draw: currentPage.value,
+        start: start,
+        length: pageSize.value,
         columns: [],
       },
     });
     logs.value = response.data.data || [];
+    totalRecords.value = response.data.recordsTotal || 0;
   } catch (error) {
     console.error('Error loading cron task logs:', error);
   }
+};
+
+const handlePageChange = (page) => {
+  currentPage.value = page;
+  loadLogs();
 };
 
 onMounted(() => {

@@ -85,7 +85,7 @@ module.exports = (FileApiLog, File, Meta) => {
     summary: 'Get file information',
     description: 'Retrieve file information and metadata by fileId',
     operationId: 'getFileInfo',
-    tags: ['files'],
+    tags: ['fileinfo'],
     parameters: [
       {
         name: 'fileId',

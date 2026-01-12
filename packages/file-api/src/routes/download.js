@@ -17,6 +17,79 @@ const {getId} = require('../getId.js');
 const authHeader = config.authHeader || 'X-API-Key';
 
 /**
+ * Санитизация ключей метаданных
+ * Разрешает только буквы, цифры, дефисы, подчеркивания
+ * Максимальная длина 100 символов
+ */
+const sanitizeMetadataKey = (key) => {
+  if (typeof key !== 'string') {
+    return null;
+  }
+  // Удаляем все символы кроме букв, цифр, дефисов и подчеркиваний
+  const sanitized = key.replace(/[^a-zA-Z0-9_-]/g, '');
+  // Ограничиваем длину
+  if (sanitized.length === 0 || sanitized.length > 100) {
+    return null;
+  }
+  return sanitized;
+};
+
+/**
+ * Санитизация значений метаданных
+ * Защита от опасных символов и инъекций
+ * Максимальная длина 10000 символов
+ */
+const sanitizeMetadataValue = (value) => {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  
+  const strValue = String(value);
+  
+  // Ограничиваем длину
+  if (strValue.length > 10000) {
+    return strValue.substring(0, 10000);
+  }
+  
+  // Удаляем управляющие символы (нулевые байты, переводы строк и т.д.)
+  // которые могут быть опасными при сохранении в БД
+  // Разрешаем обычные символы Unicode для поддержки разных языков
+  const sanitized = strValue.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  
+  return sanitized;
+};
+
+/**
+ * Извлекает и санитизирует дополнительные метаданные из req.body
+ * Исключает служебные поля (url, fileId, bucketId)
+ */
+const extractCustomMetadata = (body) => {
+  const customMetadata = {};
+  const excludedKeys = ['url', 'fileId', 'bucketId']; // Служебные поля, которые не должны быть метаданными
+  
+  if (!body || typeof body !== 'object') {
+    return customMetadata;
+  }
+  
+  for (const [key, value] of Object.entries(body)) {
+    // Пропускаем служебные поля
+    if (excludedKeys.includes(key)) {
+      continue;
+    }
+    
+    const sanitizedKey = sanitizeMetadataKey(key);
+    if (!sanitizedKey) {
+      continue; // Пропускаем невалидные ключи
+    }
+    
+    const sanitizedValue = sanitizeMetadataValue(value);
+    customMetadata[sanitizedKey] = sanitizedValue;
+  }
+  
+  return customMetadata;
+};
+
+/**
  * Исправляет кодировку имени файла
  * Проблема: имена файлов с кириллицей могут приходить в неправильной кодировке
  * Решение: декодируем из latin1 в utf8, если имя файла содержит невалидные UTF-8 символы
@@ -116,7 +189,7 @@ module.exports = (FileApiLog, File, Meta, Bucket) => {
       console.log(`[download:${requestCounter}]`, ...args);
     };
     const downloadUrl = req.body.url;
-    const fileId = getId();
+    const fileId = req.body.fileId ? req.body.fileId : getId();
 
     try {
       const key = req.get(authHeader);
@@ -160,18 +233,24 @@ module.exports = (FileApiLog, File, Meta, Bucket) => {
       }
       const mimetype = (mimeType) ? mimeType : response.headers['content-type'];
       
-      // В метаданные сохраняем только пользовательские поля
-      // fileId, mimetype, createdAt - сохраняются в модели File
-      // key - служебное поле, не сохраняем в метаданные
-      const metadata = {
-        downloadUrl, // URL источника может быть полезен
-        // size можно оставить, если нужно, но обычно не требуется
-      };
-      log('metadata to save:', JSON.stringify(metadata));
-
       // Извлекаем bucketId из req.body или используем 'default'
       const bucketId = req.body.bucketId || 'default';
       
+      // Извлекаем и санитизируем дополнительные метаданные из req.body
+      // Исключаем служебные поля: url, fileId, bucketId
+      const customMetadata = extractCustomMetadata(req.body);
+      log('custom metadata from request:', JSON.stringify(customMetadata));
+      
+      // В метаданные сохраняем только пользовательские поля
+      // fileId, mimetype, createdAt - сохраняются в модели File
+      // bucketId - сохраняется в модели File
+      // key - служебное поле, не сохраняем в метаданные
+      const metadata = {
+        downloadUrl, // URL источника может быть полезен
+        ...customMetadata, // Добавляем пользовательские метаданные
+      };
+      log('metadata to save:', JSON.stringify(metadata));
+
       // Получаем дату в формате YYYY-MM-DD
       const dateDir = moment().format('YYYY-MM-DD');
       
@@ -240,7 +319,7 @@ module.exports = (FileApiLog, File, Meta, Bucket) => {
     summary: 'Download a file',
     description: 'Send url get a response',
     operationId: 'fileDownload',
-    tags: ['files'],
+    tags: ['file-upload'],
     parameters: [],
     responses: {
       200: {

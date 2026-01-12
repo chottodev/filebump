@@ -317,7 +317,7 @@ module.exports = (FileApiLog, File, Meta, Bucket) => {
     summary: 'Upload a file',
     description: 'Upload a file and get a response',
     operationId: 'fileUpload',
-    tags: ['files'],
+    tags: ['file-upload'],
     parameters: [
       {
         name: 'file',

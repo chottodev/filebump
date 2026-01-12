@@ -42,6 +42,13 @@
       </tbody>
     </table>
 
+    <Pagination
+      :current-page="currentPage"
+      :page-size="pageSize"
+      :total-records="totalRecords"
+      @page-change="handlePageChange"
+    />
+
     <!-- Модальное окно для метаданных -->
     <div v-if="showModal" class="modal-overlay" @click="closeModal">
       <div class="modal-content" @click.stop>
@@ -97,6 +104,7 @@ import { ref, onMounted } from 'vue';
 import api from '../services/api';
 import axios from 'axios';
 import { FilebumpClient } from '@filebump/filebump-api-client';
+import Pagination from './Pagination.vue';
 
 const files = ref([]);
 const downloading = ref(null);
@@ -104,6 +112,11 @@ const loadingMetadata = ref(null);
 const showModal = ref(false);
 const currentMetadata = ref(null);
 const metadataError = ref(null);
+
+// Пагинация
+const currentPage = ref(1);
+const pageSize = ref(10);
+const totalRecords = ref(0);
 
 // URL file-api для скачивания файлов
 const fileApiUrl = import.meta.env.VITE_FILE_API_URL || 'http://localhost:3007';
@@ -117,18 +130,25 @@ const filebumpClient = new FilebumpClient({
 
 const loadFiles = async () => {
   try {
+    const start = (currentPage.value - 1) * pageSize.value;
     const response = await api.get('/journals/files', {
       params: {
-        draw: 1,
-        start: 0,
-        length: 10,
+        draw: currentPage.value,
+        start: start,
+        length: pageSize.value,
         columns: [],
       },
     });
     files.value = response.data.data || [];
+    totalRecords.value = response.data.recordsTotal || 0;
   } catch (error) {
     console.error('Error loading files:', error);
   }
+};
+
+const handlePageChange = (page) => {
+  currentPage.value = page;
+  loadFiles();
 };
 
 const downloadFile = async (file) => {

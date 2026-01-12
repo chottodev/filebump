@@ -128,7 +128,7 @@ module.exports = (FileApiLog, Meta, File) => {
     summary: '',
     description: 'Upload a file and get a response',
     operationId: 'FileGet',
-    tags: ['files'],
+    tags: ['get-file'],
     responses: {
       200: {
         description: 'File found and returned successfully',

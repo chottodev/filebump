@@ -189,15 +189,18 @@ journalsRouter.get('/buckets', async (req, res) => {
   console.log('get /api/journals/buckets');
   
   try {
-    const buckets = await Bucket.find({}, null, {
+    const rows = await Bucket.find({}, null, {
       sort: '-createdAt',
+      limit: parseInt(req.query.length || 10),
+      skip: parseInt(req.query.start || 0),
     });
+    const count = await Bucket.countDocuments({});
     
     res.json({
       draw: parseInt(req.query.draw || 1),
-      recordsTotal: buckets.length,
-      recordsFiltered: buckets.length,
-      data: buckets,
+      recordsTotal: count,
+      recordsFiltered: count,
+      data: rows,
     });
   } catch (err) {
     console.log(err);

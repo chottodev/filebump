@@ -11,7 +11,7 @@
             id="api-url"
             type="text" 
             v-model="apiUrl" 
-            placeholder="http://localhost:3007"
+            :placeholder="defaultApiUrl"
             class="form-control"
             @input="saveConfig"
           />
@@ -76,8 +76,11 @@ const STORAGE_KEY_API_URL = 'filebump-playground-api-url';
 const STORAGE_KEY_API_KEY = 'filebump-playground-api-key';
 
 const activeTab = ref('upload-file');
-const apiUrl = ref('http://localhost:3007');
-const apiKey = ref('testKey1');
+// Значение по умолчанию из переменной окружения
+const defaultApiUrl = import.meta.env.VITE_FILE_API_URL || 'http://localhost:3007';
+const defaultApiKey = import.meta.env.VITE_FILE_API_KEY || 'testKey1';
+const apiUrl = ref(defaultApiUrl);
+const apiKey = ref(defaultApiKey);
 
 // Загрузка из localStorage при монтировании
 onMounted(() => {
@@ -87,21 +90,15 @@ onMounted(() => {
   if (savedApiUrl) {
     apiUrl.value = savedApiUrl;
   } else {
-    // Пробуем взять из env переменных
-    const envUrl = import.meta.env.VITE_FILE_API_URL;
-    if (envUrl) {
-      apiUrl.value = envUrl;
-    }
+    // Используем значение по умолчанию (уже установлено выше)
+    apiUrl.value = defaultApiUrl;
   }
   
   if (savedApiKey) {
     apiKey.value = savedApiKey;
   } else {
-    // Пробуем взять из env переменных
-    const envKey = import.meta.env.VITE_FILE_API_KEY;
-    if (envKey) {
-      apiKey.value = envKey;
-    }
+    // Используем значение по умолчанию (уже установлено выше)
+    apiKey.value = defaultApiKey;
   }
 });
 

@@ -8,8 +8,16 @@ module.exports = {
   },
   tags: [
     {
-      name: 'files',
-      description: 'File operations',
+      name: 'get-file',
+      description: 'Get file endpoints',
+    },
+    {
+      name: 'file-upload',
+      description: 'File upload endpoints',
+    },
+    {
+      name: 'fileinfo',
+      description: 'File information endpoints',
     },
   ],
   paths: {},

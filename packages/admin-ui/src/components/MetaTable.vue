@@ -55,12 +55,20 @@
         </tr>
       </tbody>
     </table>
+
+    <Pagination
+      :current-page="currentPage"
+      :page-size="pageSize"
+      :total-records="totalRecords"
+      @page-change="handlePageChange"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import api from '../services/api';
+import Pagination from './Pagination.vue';
 
 const metaRecords = ref([]);
 const loading = ref(false);
@@ -70,15 +78,21 @@ const filters = ref({
   value: '',
 });
 
+// Пагинация
+const currentPage = ref(1);
+const pageSize = ref(10);
+const totalRecords = ref(0);
+
 let filterTimeout = null;
 
 const loadMeta = async () => {
   loading.value = true;
   try {
+    const start = (currentPage.value - 1) * pageSize.value;
     const params = {
-      draw: 1,
-      start: 0,
-      length: 100,
+      draw: currentPage.value,
+      start: start,
+      length: pageSize.value,
     };
     
     // Добавляем фильтры только если они не пустые
@@ -94,6 +108,7 @@ const loadMeta = async () => {
     
     const response = await api.get('/journals/meta', { params });
     metaRecords.value = response.data.data || [];
+    totalRecords.value = response.data.recordsTotal || 0;
   } catch (error) {
     console.error('Error loading meta:', error);
     metaRecords.value = [];
@@ -102,7 +117,14 @@ const loadMeta = async () => {
   }
 };
 
+const handlePageChange = (page) => {
+  currentPage.value = page;
+  loadMeta();
+};
+
 const onFilterChange = () => {
+  // При изменении фильтра сбрасываем на первую страницу
+  currentPage.value = 1;
   // Дебаунс для предотвращения слишком частых запросов
   if (filterTimeout) {
     clearTimeout(filterTimeout);

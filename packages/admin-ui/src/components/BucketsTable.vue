@@ -23,26 +23,48 @@
         </tr>
       </tbody>
     </table>
+
+    <Pagination
+      :current-page="currentPage"
+      :page-size="pageSize"
+      :total-records="totalRecords"
+      @page-change="handlePageChange"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import api from '../services/api';
+import Pagination from './Pagination.vue';
 
 const buckets = ref([]);
 
+// Пагинация
+const currentPage = ref(1);
+const pageSize = ref(10);
+const totalRecords = ref(0);
+
 const loadBuckets = async () => {
   try {
+    const start = (currentPage.value - 1) * pageSize.value;
     const response = await api.get('/journals/buckets', {
       params: {
-        draw: 1,
+        draw: currentPage.value,
+        start: start,
+        length: pageSize.value,
       },
     });
     buckets.value = response.data.data || [];
+    totalRecords.value = response.data.recordsTotal || 0;
   } catch (error) {
     console.error('Error loading buckets:', error);
   }
+};
+
+const handlePageChange = (page) => {
+  currentPage.value = page;
+  loadBuckets();
 };
 
 const viewBucketFiles = (bucket) => {
