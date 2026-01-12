@@ -91,15 +91,20 @@ class FilebumpClient {
     return await axios.get(url, request_config);
   }
 
-  async getMetadata(fileId) {
+  async getFileInfo(fileId) {
     const request_config = {
       headers: {
         'X-API-Key': this.key,
       }
     };
 
-    const url = `${this.url}/file/${fileId}/metadata`;
+    const url = `${this.url}/file/${fileId}/fileinfo`;
     return await axios.get(url, request_config);
+  }
+
+  // Deprecated: используйте getFileInfo вместо getMetadata
+  async getMetadata(fileId) {
+    return this.getFileInfo(fileId);
   }
 
   async uploadByUrl(sourceUrl, fileId = null) {

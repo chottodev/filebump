@@ -73,7 +73,7 @@ const postUploadAction = async (metadata) => {
   }
 };
 
-module.exports = (FileApiLog, Meta) => {
+module.exports = (FileApiLog, File, Meta) => {
   async function post(req, res) {
     console.log('post /download');
     const startTime = performance.now();
@@ -116,10 +116,15 @@ module.exports = (FileApiLog, Meta) => {
 
       const response = await axios.get(downloadUrl, {responseType: 'arraybuffer'});
       const date = new Date();
+      
+      // Извлекаем имя файла из заголовка, если есть
+      const filename = targetHeader ? targetHeader.match(filenameReg)?.[1] : null;
+      const mimetype = (mimeType) ? mimeType : response.headers['content-type'];
+      
       const metadata = {
         fileId,
         downloadUrl,
-        mimetype: (mimeType) ? mimeType : response.headers['content-type'],
+        mimetype,
         size: response.headers['content-length'],
         dateCreated: (+date / 1000).toFixed(0),
         key,
@@ -135,6 +140,14 @@ module.exports = (FileApiLog, Meta) => {
       await fs.writeFile(uploadPathFile, response.data, {encoding: 'binary'});
       // Сохраняем метаданные в БД вместо JSON файла
       await saveMetadata(Meta, fileId, metadata);
+      
+      // Сохраняем данные файла в модель File
+      await File.create({
+        fileId,
+        filename: filename || null,
+        mimetype: mimetype || null,
+        dateCreated: moment().format('YYYY-MM-DD HH:mm:ss'),
+      });
 
       await FileApiLog.create({
         date: moment().format('YYYY-MM-DD HH:mm:ss'),

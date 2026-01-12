@@ -28,7 +28,7 @@ journalsRouter.get('/files', async (req, res) => {
   }
   try {
     const rows = await File.find(query, null, {
-      sort: '-date',
+      sort: '-dateCreated',
       limit: parseInt(req.query.length || 10),
       skip: parseInt(req.query.start || 0),
     });
@@ -149,20 +149,34 @@ journalsRouter.get('/cron-task-log', async (req, res) => {
   }
 });
 
-journalsRouter.get('/files/:fileId/metadata', async (req, res) => {
+journalsRouter.get('/files/:fileId/fileinfo', async (req, res) => {
   const {fileId} = req.params;
-  console.log('get /api/journals/files/:fileId/metadata', fileId);
+  console.log('get /api/journals/files/:fileId/fileinfo', fileId);
   
   try {
+    // Получаем данные файла из модели File
+    const file = await File.findOne({fileId});
+    
+    if (!file) {
+      return res.status(404).json({error: 'File not found'});
+    }
+    
+    // Получаем все метаданные для fileId из модели Meta
     const metaRecords = await Meta.find({fileId});
-    const metadata = {};
+    
+    // Преобразуем массив записей в объект
+    const meta = {};
     metaRecords.forEach((record) => {
-      metadata[record.key] = record.value;
+      meta[record.key] = record.value;
     });
     
     res.json({
-      fileId,
-      metadata,
+      status: 'OK',
+      fileId: file.fileId,
+      filename: file.filename,
+      mimetype: file.mimetype,
+      dateCreated: file.dateCreated,
+      meta,
     });
   } catch (err) {
     console.log(err);

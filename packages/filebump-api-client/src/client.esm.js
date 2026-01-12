@@ -76,7 +76,7 @@ class FilebumpClient {
       },
     };
 
-    const url = `${this.url}/file/${fileId}`;
+    const url = `${this.url}/file/${fileId}/fileinfo`;
     return await axios.get(url, config);
   }
 
@@ -92,15 +92,20 @@ class FilebumpClient {
     return await axios.get(url, config);
   }
 
-  async getMetadata(fileId) {
+  async getFileInfo(fileId) {
     const config = {
       headers: {
         'X-API-Key': this.key,
       },
     };
 
-    const url = `${this.url}/file/${fileId}/metadata`;
+    const url = `${this.url}/file/${fileId}/fileinfo`;
     return await axios.get(url, config);
+  }
+
+  // Deprecated: используйте getFileInfo вместо getMetadata
+  async getMetadata(fileId) {
+    return this.getFileInfo(fileId);
   }
 }
 

@@ -4,18 +4,18 @@
       <thead>
         <tr>
           <th>File ID</th>
+          <th>Filename</th>
           <th>Mimetype</th>
-          <th>Size</th>
-          <th>Date</th>
+          <th>Date Created</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="file in files" :key="file._id">
           <td>{{ file.fileId }}</td>
-          <td>{{ file.mimetype }}</td>
-          <td>{{ file.size }}</td>
-          <td>{{ file.date }}</td>
+          <td>{{ file.filename || 'N/A' }}</td>
+          <td>{{ file.mimetype || 'N/A' }}</td>
+          <td>{{ file.dateCreated || 'N/A' }}</td>
           <td>
             <div class="action-buttons">
               <button 
@@ -44,23 +44,39 @@
     <div v-if="showModal" class="modal-overlay" @click="closeModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h3>File Metadata</h3>
+          <h3>File Information</h3>
           <button class="modal-close" @click="closeModal">&times;</button>
         </div>
         <div class="modal-body">
-          <div v-if="loadingMetadata" class="loading">Loading metadata...</div>
+          <div v-if="loadingMetadata" class="loading">Loading file info...</div>
           <div v-else-if="metadataError" class="error">{{ metadataError }}</div>
-          <div v-else-if="currentMetadata && Object.keys(currentMetadata.metadata || {}).length > 0" class="metadata-list">
+          <div v-else-if="currentMetadata" class="metadata-list">
             <div class="metadata-item">
               <strong>File ID:</strong>
               <span>{{ currentMetadata.fileId }}</span>
             </div>
-            <div v-for="(value, key) in currentMetadata.metadata" :key="key" class="metadata-item">
-              <strong>{{ formatKey(key) }}:</strong>
-              <span>{{ value }}</span>
+            <div v-if="currentMetadata.filename" class="metadata-item">
+              <strong>Filename:</strong>
+              <span>{{ currentMetadata.filename }}</span>
             </div>
+            <div v-if="currentMetadata.mimetype" class="metadata-item">
+              <strong>MIME Type:</strong>
+              <span>{{ currentMetadata.mimetype }}</span>
+            </div>
+            <div v-if="currentMetadata.dateCreated" class="metadata-item">
+              <strong>Date Created:</strong>
+              <span>{{ currentMetadata.dateCreated }}</span>
+            </div>
+            <div v-if="currentMetadata.meta && Object.keys(currentMetadata.meta).length > 0" class="metadata-section">
+              <h4>Metadata:</h4>
+              <div v-for="(value, key) in currentMetadata.meta" :key="key" class="metadata-item">
+                <strong>{{ formatKey(key) }}:</strong>
+                <span>{{ value }}</span>
+              </div>
+            </div>
+            <div v-else-if="!currentMetadata.meta || Object.keys(currentMetadata.meta || {}).length === 0" class="no-data">No metadata available for this file</div>
           </div>
-          <div v-else class="no-data">No metadata available for this file</div>
+          <div v-else class="no-data">No file information available</div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" @click="closeModal">Close</button>
@@ -131,7 +147,7 @@ const downloadFile = async (file) => {
     
     // Определяем имя файла из mimetype или используем fileId
     const extension = getExtensionFromMimetype(file.mimetype);
-    const fileName = file.name || `file_${file.fileId}${extension}`;
+    const fileName = file.filename || `file_${file.fileId}${extension}`;
     link.download = fileName;
     
     // Добавляем ссылку в DOM, кликаем и удаляем
@@ -178,7 +194,7 @@ const showMetadata = async (file) => {
   metadataError.value = null;
   
   try {
-    const response = await filebumpClient.getMetadata(file.fileId);
+    const response = await filebumpClient.getFileInfo(file.fileId);
     currentMetadata.value = response.data;
   } catch (error) {
     console.error('Error loading metadata:', error);
@@ -378,5 +394,17 @@ th {
   flex: 1;
   word-break: break-word;
   color: #666;
+}
+
+.metadata-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #dee2e6;
+}
+
+.metadata-section h4 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.1rem;
 }
 </style>

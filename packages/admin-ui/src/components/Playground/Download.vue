@@ -40,10 +40,15 @@
       <h3>File Information:</h3>
       <div class="info-box">
         <p><strong>File ID:</strong> {{ fileInfo.fileId || 'N/A' }}</p>
-        <p><strong>File Name:</strong> {{ fileInfo.fileName || 'N/A' }}</p>
+        <p><strong>Filename:</strong> {{ fileInfo.filename || 'N/A' }}</p>
         <p><strong>MIME Type:</strong> {{ fileInfo.mimetype || 'N/A' }}</p>
-        <p><strong>Size:</strong> {{ fileInfo.size ? formatFileSize(fileInfo.size) : 'N/A' }}</p>
-        <p><strong>Date:</strong> {{ fileInfo.date || 'N/A' }}</p>
+        <p><strong>Date Created:</strong> {{ fileInfo.dateCreated || 'N/A' }}</p>
+        <div v-if="fileInfo.meta && Object.keys(fileInfo.meta).length > 0" class="metadata-section">
+          <h4>Metadata:</h4>
+          <div v-for="(value, key) in fileInfo.meta" :key="key" class="metadata-item">
+            <strong>{{ key }}:</strong> {{ value }}
+          </div>
+        </div>
       </div>
     </div>
 
@@ -258,6 +263,30 @@ const downloadFile = async () => {
 
 .info-box p {
   margin: 0.5rem 0;
+}
+
+.metadata-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #b3d9ff;
+}
+
+.metadata-section h4 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.metadata-item {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background-color: #f0f8ff;
+  border-radius: 4px;
+}
+
+.metadata-item strong {
+  margin-right: 0.5rem;
+  color: #333;
 }
 
 .result-section {

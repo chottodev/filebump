@@ -47,7 +47,7 @@ module.exports = {
         },
       },
     },
-    File_metadata: {
+    File_info: {
       type: 'object',
       properties: {
         status: {
@@ -56,7 +56,16 @@ module.exports = {
         fileId: {
           type: 'string',
         },
-        metadata: {
+        filename: {
+          type: 'string',
+        },
+        mimetype: {
+          type: 'string',
+        },
+        dateCreated: {
+          type: 'string',
+        },
+        meta: {
           type: 'object',
           description: 'Object with metadata key-value pairs',
           additionalProperties: {

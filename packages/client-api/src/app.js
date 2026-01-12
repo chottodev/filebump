@@ -58,7 +58,7 @@ function createApp({
       {path: '/download', module: require('./routes/download')},
       {path: '/file/{fileId}', module: require('./routes/file')},
       {path: '/file/{fileId}/{fileName}', module: require('./routes/fileName')},
-      {path: '/file/{fileId}/metadata', module: require('./routes/metadata')},
+      {path: '/file/{fileId}/fileinfo', module: require('./routes/fileinfo')},
     ],
     promiseMode: true,
   });

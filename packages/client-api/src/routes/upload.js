@@ -194,9 +194,10 @@ module.exports = (FileApiLog, File, Meta) => {
         status: RESULT.OK,
       };
       await File.create({
-        ...uploadedFile,
-        date: moment().format('YYYY-MM-DD HH:mm:ss'),
         fileId: resData.fileId,
+        filename: uploadedFile.name,
+        mimetype: uploadedFile.mimetype,
+        dateCreated: moment().format('YYYY-MM-DD HH:mm:ss'),
       });
 
       await FileApiLog.create({
