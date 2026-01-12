@@ -17,4 +17,4 @@ RUN npm install
 
 COPY . /usr/src/app
 
-RUN npm run build
+RUN npm run build:admin-ui
