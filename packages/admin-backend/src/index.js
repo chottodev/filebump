@@ -11,13 +11,15 @@ app.use(session({
   saveUninitialized: true,
 }));
 
-// Auth middleware - mock for development
-app.use((req, res, next) => {
-  req.account = req.account || { id: 1, name: 'Admin' };
-  req.user = req.user || { id: 1, name: 'User' };
-  req.relatedApplications = req.relatedApplications || [];
-  next();
-});
+// Mock auth middleware - применяется только если auth выключен
+if (!config.authEnabled) {
+  app.use((req, res, next) => {
+    req.account = req.account || { id: 1, name: 'Admin' };
+    req.user = req.user || { id: 1, name: 'User' };
+    req.relatedApplications = req.relatedApplications || [];
+    next();
+  });
+}
 
 app.use(express.json({limit: '2MB'}));
 app.use(express.urlencoded({extended: true}));
@@ -29,16 +31,52 @@ app.get('/health', (req, res) => {
 
 // Config endpoint for UI
 app.get('/api/config', (req, res) => {
-  res.json({
+  const response = {
     fileApiUrl: config.fileApiUrl,
     fileApiKey: config.fileApiKey,
-  });
+  };
+
+  // Добавляем конфигурацию авторизации если включена
+  if (config.authEnabled) {
+    response.providerUrl = config.authProviderUrl;
+    response.clientId = config.authClientId;
+  }
+
+  res.json(response);
 });
 
+// User endpoint для проверки токена (только если auth включен)
+if (config.authEnabled) {
+  const {validateJWT} = require('./middleware/auth');
+  
+  app.get('/api/user', validateJWT, (req, res) => {
+    res.json({
+      sub: req.user.sub,
+      name: req.user.name,
+      email: req.user.email,
+      role: req.user.role,
+    });
+  });
+}
+
 // API routes
-app.use('/api/journals', require('./routes/journals'));
-app.use('/api/charts', require('./routes/charts'));
-app.use('/api/reports', require('./routes/reports'));
+let apiAuthMiddleware;
+if (config.authEnabled) {
+  const {validateJWT} = require('./middleware/auth');
+  apiAuthMiddleware = validateJWT;
+} else {
+  // Mock auth для обратной совместимости
+  apiAuthMiddleware = (req, res, next) => {
+    req.account = req.account || { id: 1, name: 'Admin' };
+    req.user = req.user || { id: 1, name: 'User' };
+    req.relatedApplications = req.relatedApplications || [];
+    next();
+  };
+}
+
+app.use('/api/journals', apiAuthMiddleware, require('./routes/journals'));
+app.use('/api/charts', apiAuthMiddleware, require('./routes/charts'));
+app.use('/api/reports', apiAuthMiddleware, require('./routes/reports'));
 
 // Serve static files from admin-ui build
 const fs = require('fs');
@@ -104,6 +142,11 @@ const bootstrap = async () => {
     app.listen(config.port, () => {
       console.log(`Admin Backend started on port ${config.port}`);
       console.log(`Serving admin-ui from: ${adminUiDistPath}`);
+      console.log(`Auth enabled: ${config.authEnabled ? 'YES' : 'NO'}`);
+      if (config.authEnabled) {
+        console.log(`Auth Provider URL: ${config.authProviderUrl}`);
+        console.log(`Auth Client ID: ${config.authClientId}`);
+      }
     });
   } catch (e) {
     console.error('Error starting server:', e);
